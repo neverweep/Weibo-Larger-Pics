@@ -18,10 +18,9 @@
 //version for auto update
 var tsinam_version = "0.02";
 var t_rdate = "2013-07-14";
+var ua = navigator.userAgent.toLowerCase();
 
 document.addEventListener('DOMSubtreeModified',function(e){
-
-    var ua = navigator.userAgent.toLowerCase();
 
     //插入 i 标签
     function insertI(node,symbol){
@@ -31,7 +30,7 @@ document.addEventListener('DOMSubtreeModified',function(e){
         node.appendChild(iElement);
     }
 
-    //try{
+    try{
         var that = e.target || event.target;//必须这样写  
         //判断 event 节点是否要求
         if(typeof(that.children) != 'undefined' && that.children.length > 0){
@@ -117,5 +116,5 @@ document.addEventListener('DOMSubtreeModified',function(e){
             }
         }
         delete that;
-    //}catch(err){}
+    }catch(err){}
 })

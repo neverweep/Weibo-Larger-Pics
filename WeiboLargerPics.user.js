@@ -2,7 +2,7 @@
 // @name           Weibo Larger Pics
 // @namespace      http://xiaoxia.de/
 // @description    Easily view larger pics on Weibo.com
-// @version        0.01
+// @version        0.02
 // @author         xiaoxia
 // @include        http://t.sina.com.cn/*
 // @include        http://weibo.com/*
@@ -16,10 +16,12 @@
 // ==/UserScript==
 
 //version for auto update
-var tsinam_version = "0.01";
+var tsinam_version = "0.02";
 var t_rdate = "2013-07-14";
 
-document.addEventListener('DOMSubtreeModified',function(){
+document.addEventListener('DOMSubtreeModified',function(e){
+
+    var ua = navigator.userAgent.toLowerCase();
 
     //插入 i 标签
     function insertI(node,symbol){
@@ -29,14 +31,19 @@ document.addEventListener('DOMSubtreeModified',function(){
         node.appendChild(iElement);
     }
 
-    try{
-        var that = event.target;
+    //try{
+        var that = e.target || event.target;//必须这样写  
         //判断 event 节点是否要求
         if(typeof(that.children) != 'undefined' && that.children.length > 0){
 
 
+            if(ua.match('firefox')){
+                var browserTest  = ((that.className.match('WB_media_expand') && that.className.match('SW_fun2') && that.style.display != "none") || ( that.className == 'expand' && (that.parentNode.style.display != "none" && that.style.display != "none")) || (that.getAttribute('node-type') == 'imagesBox' && that.style.display != "none"));
+            }else{
+                var browserTest = true;
+            }
             //判断 event dom 是否为需要操作的 dom，that.getAttribute('node-type') == 'imagesBox' 为非转发多图的状态。
-            if((that.className.match('WB_media_expand') && that.className.match('SW_fun2')) || that.className == 'expand' || that.getAttribute('node-type') == 'imagesBox'){
+            if((that.className.match('WB_media_expand') && that.className.match('SW_fun2') && browserTest) || (that.className == 'expand' && browserTest) || (that.getAttribute('node-type') == 'imagesBox' && browserTest)){
                     //console.log('要求 1');
 
 
@@ -110,5 +117,5 @@ document.addEventListener('DOMSubtreeModified',function(){
             }
         }
         delete that;
-    }catch(err){}
+    //}catch(err){}
 })

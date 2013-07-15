@@ -2,7 +2,7 @@
 // @name           Weibo Larger Pics
 // @namespace      http://xiaoxia.de/
 // @description    Easily view larger pics on Weibo.com
-// @version        0.02
+// @version        0.03
 // @author         xiaoxia
 // @include        http://t.sina.com.cn/*
 // @include        http://weibo.com/*
@@ -12,15 +12,23 @@
 // @exclude        http://e.weibo.com/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
-// @updateinfo     initial release
+// @updateinfo     ...
 // ==/UserScript==
 
 //version for auto update
-var tsinam_version = "0.02";
-var t_rdate = "2013-07-14";
-var ua = navigator.userAgent.toLowerCase();
+var tsinam_version = "0.03";
+var t_rdate = "2013-07-15";
+var isFirefox = navigator.userAgent.toLowerCase().match('firefox');
 
-document.addEventListener('DOMSubtreeModified',function(e){
+if(document.getElementById('pl_content_homeFeed') != null){
+    var nodeListen = document.getElementById('pl_content_homeFeed');
+}else if(document.getElementById('pl_content_hisFeed') != null){
+    var nodeListen = document.getElementById('pl_content_hisFeed');
+}else{
+    return;
+}
+
+nodeListen.addEventListener('DOMSubtreeModified',function(e){
 
     //插入 i 标签
     function insertI(node,symbol){
@@ -31,20 +39,19 @@ document.addEventListener('DOMSubtreeModified',function(e){
     }
 
     try{
-        var that = e.target || event.target;//必须这样写  
+        var that = e.target || event.target;
         //判断 event 节点是否要求
         if(typeof(that.children) != 'undefined' && that.children.length > 0){
 
-
-            if(ua.match('firefox')){
+            //火狐修正
+            if(isFirefox){
                 var browserTest  = ((that.className.match('WB_media_expand') && that.className.match('SW_fun2') && that.style.display != "none") || ( that.className == 'expand' && (that.parentNode.style.display != "none" && that.style.display != "none")) || (that.getAttribute('node-type') == 'imagesBox' && that.style.display != "none"));
             }else{
-                var browserTest = true;
+                var browserTest = (that.className.match('WB_media_expand') && that.className.match('SW_fun2')) || that.className == 'expand' || (that.getAttribute('node-type') == 'imagesBox');
             }
             //判断 event dom 是否为需要操作的 dom，that.getAttribute('node-type') == 'imagesBox' 为非转发多图的状态。
-            if((that.className.match('WB_media_expand') && that.className.match('SW_fun2') && browserTest) || (that.className == 'expand' && browserTest) || (that.getAttribute('node-type') == 'imagesBox' && browserTest)){
-                    //console.log('要求 1');
-
+            if(browserTest){
+                //console.log('1');
 
                 //判断是否为多图模式
                 var notMulti = true;
@@ -59,7 +66,7 @@ document.addEventListener('DOMSubtreeModified',function(e){
 
                 //继续判断是否为需要操作的 dom
                 if(attr.match('img') || cls.match('pic_list_view')){
-                    //console.log('要求 2');
+                    //console.log('2');
 
                     insertI(that.children[0],'<');
                     var aElement = document.createElement("a");

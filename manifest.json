@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "Weibo Larger Pics \u65B0\u6D6A\u5FAE\u535A\u4E4B\u6211\u8981\u770B\u5927\u56FE",
+  "description": "Easily view larger pics on Weibo.com \u5FEB\u901F\u8FDB\u5165\u5927\u56FE\u9875\u9762\u3001\u56FE\u7247\u8BE6\u60C5\u9875\u9762\u548C\u539F\u59CB\u5730\u5740\u3002",
+  "version": "1.0.5",
+  "minimum_chrome_version": "21",
+  "icons": {
+    "128": "icons/icon_128.png",
+    "48": "icons/icon_48.png",
+    "32": "icons/icon_32.png"
+  },
+  "update_url": "https://clients2.google.com/service/update2/crx",
+  "content_security_policy": "script-src 'self'; object-src 'self'",
+  "content_scripts": [ {
+     "exclude_globs": [ "http://s.weibo.com/user/*", "http://s.weibo.com/pic/*", "http://weibo.com/app/*", "http://weibo.com/app" ],
+     "exclude_matches": [  ],
+     "include_globs": [ "http://t.sina.com.cn/*", "http://weibo.com/*", "http://www.weibo.com/*", "http://e.weibo.com/*", "http://media.weibo.com/*", "http://s.weibo.com/*", "http://hot.weibo.com/*", "http://huati.weibo.com/*" ],
+     "js": [ "WeiboLargerPics.user.js" ],
+     "matches": [ "http://*.weibo.com/*", "http://t.sina.com.cn/*" ],
+     "run_at": "document_end"
+  } ]
+}

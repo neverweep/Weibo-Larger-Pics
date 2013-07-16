@@ -2,7 +2,7 @@
 // @name           Weibo Larger Pics 新浪微博之我要看大图
 // @namespace      http://xiaoxia.de/
 // @description    Easily view larger pics on Weibo.com 快速进入大图页面、图片详情页面和原始地址。
-// @version        0.05
+// @version        1.0.5
 // @author         xiaoxia
 // @include        http://t.sina.com.cn/*
 // @include        http://weibo.com/*
@@ -11,20 +11,24 @@
 // @include        http://media.weibo.com/*
 // @include        http://s.weibo.com/*
 // @include        http://hot.weibo.com/*
+// @include        http://huati.weibo.com/*
+// @exclude        http://s.weibo.com/user/*
+// @exclude        http://s.weibo.com/pic/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
-// @updateinfo     增加搜索、企业版、热门、媒体版支持
+// @updateinfo     增加搜索、企业版、热门、媒体版、话题支持
 // ==/UserScript==
 
 //version for auto update
-var version = "0.05";
+var version = "1.0.5";
 var modifyDate = "2013-07-16";
 
 var isFirefox = navigator.userAgent.toLowerCase().match('firefox') != null; //判断是否为 firefox，firefox 似乎会在 dom 改变之前响应事件，别的浏览器都是在 dom 改变之后。
 var enterprise = window.location.host == 'e.weibo.com'; //判断企业版微博
 var media = window.location.host == 'media.weibo.com'; //判断媒体版微博
 var search = window.location.host == 's.weibo.com'; //判断搜索页面
-var hot = window.location.host == 'hot.weibo.com'; //判断搜索页面
+var hot = window.location.host == 'hot.weibo.com'; //判断热门页面
+var huati = window.location.host == 'huati.weibo.com'; //判断话题页面
 
 //判断页面类型
 if(document.getElementById('pl_content_homeFeed') != null){
@@ -32,21 +36,35 @@ if(document.getElementById('pl_content_homeFeed') != null){
     var nodeListen = document.getElementById('pl_content_homeFeed');
     entryMain(nodeListen);
 }else if(document.getElementById('pl_content_hisFeed') != null){
-    //他人时间线 包含企业版和普通用户
+     //他人时间线 包含企业版和普通用户
     var nodeListen = document.getElementById('pl_content_hisFeed');
     entryMain(nodeListen);
 }else if(document.getElementById('pl_weibo_feedlist') != null && search){
     //搜索页面
     var nodeListen = document.getElementById('pl_weibo_feedlist');
     entryMain(nodeListen);
-}else if(document.getElementById('weibo_top_public') != null && hot){
+}else if(document.getElementById('pl_plaza_hotWeiboFeed') != null && hot){
     //热门页面
-    var nodeListen = document;
+    var nodeListen = document.getElementById('pl_plaza_hotWeiboFeed');
     entryMain(nodeListen);
 }else if(document.getElementById('epfeedlist') != null && media){
     //媒体版页面
     var nodeListen = document.getElementById('epfeedlist');
-    entryMedia(nodeListen);// 媒体版差异（可能）较大，使用独立的入口
+    entryMedia(nodeListen); //媒体版差异（可能）较大，使用独立的入口
+}else if(document.getElementById('Pl_Core_OwnerFeed__5') != null){
+    //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
+    var nodeListen = document.getElementById('Pl_Core_OwnerFeed__5');
+    entryMain(nodeListen);
+}else if(document.getElementById('pl_content_topicHotFeed') != null && huati){
+    //话题
+    var nodeListen_1 = document.getElementById('pl_content_topicHotFeed');//相关话题里面的热门微博
+    var nodeListen_2 = document.getElementById('pl_content_topicFeed');//相关话题的普通微博
+    if(document.getElementById('pl_content_topicCite') != null){
+        var nodeListen_3 = document.getElementById('pl_content_topicCite');//相关话题的置顶微博
+        entryHuati(nodeListen_3); //使用独立入口
+    }
+    entryHuati(nodeListen_1); //使用独立入口
+    entryHuati(nodeListen_2); //使用独立入口
 }
 
 //插入 a 标签
@@ -62,11 +80,28 @@ function insertA(node, href, title, inner){
 //插入 i 标签
 function insertI(node, symbol){
     var iElement = document.createElement('i');
-    iElement.className = 'W_vline';
+    iElement.className = 'W_vline W8_vline';
     iElement.innerHTML = symbol;
     node.appendChild(iElement);
 }
 
+//插入按钮
+function insertEls(node, uid, mid, pid, format, cdn, multiPics){
+    //大图地址
+    insertI(node,'<');
+    insertA(node, 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid, '进入相册大图页面', '图');
+
+    //相册详情，多图模式下无法获得 mid，所以不显示
+    if(!multiPics){
+        insertI(node, '|');
+        insertA(node, 'http://photo.weibo.com/' + uid + '/talbum/detail/photo_id/' + mid, '进入相册详情页面', '详');
+    }
+
+    //原图地址
+    insertI(node, '|');
+    insertA(node, 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format, '大图原始地址，在此点击右键可以另存图像或复制地址', '源');
+    insertI(node, '>');
+}
 
 //主入口
 function entryMain(nodeMain){
@@ -75,7 +110,7 @@ function entryMain(nodeMain){
 
     //子入口
     function entrySub(e){
-    //try{
+    try{
         var that = e.target || event.target;
 
         //console.log(that);
@@ -220,26 +255,12 @@ function entryMain(nodeMain){
                         uid = para[2];
                     }
 
-                    //大图地址
-                    insertI(that.children[0],'<');
-                    insertA(that.children[0], 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid, '进入相册大图页面', '图');
-
-                    //相册详情，多图模式下无法获得 mid，所以不显示
-                    if(!multiPics){
-                        insertI(that.children[0], '|');
-                        insertA(that.children[0], 'http://photo.weibo.com/' + uid + '/talbum/detail/photo_id/' + mid, '进入相册详情页面', '详');
-                    }
-
-                    //原图地址
-                    insertI(that.children[0], '|');
-                    insertA(that.children[0], 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format, '大图原始地址，在此点击右键可以另存图像或复制地址', '源');
-                    insertI(that.children[0], '>');
+                    insertEls(that.children[0], uid, mid, pid, format, cdn, multiPics);
                 }
             }
         }
         delete that;
-
-    //}catch(err){}
+    }catch(err){}
     }
 }
 
@@ -250,7 +271,7 @@ function entryMedia(nodeMain){
 
     //子入口
     function entrySub(e){
-    //try{
+    try{
         var that = e.target || event.target;
 
         //console.log(that);
@@ -283,20 +304,71 @@ function entryMedia(nodeMain){
                 var cdn = that.children[1].src.replace(/^.*?\/\/ww(.).*/,'$1');
                 var pid = that.children[1].src.replace(/.*\/([\w]+)\..../,'$1');
 
-                //大图地址
-                insertI(that.children[0],'<');
-                insertA(that.children[0], 'http://photo.weibo.com/' + uid + '/wbphotos/large/photo_id/' + mid, '进入相册大图页面', '图');
-
-                //相册详情
-                insertI(that.children[0], '|');
-                insertA(that.children[0], 'http://photo.weibo.com/' + uid + '/talbum/detail/photo_id/' + mid, '进入相册详情页面', '详');
-
-                //原图地址
-                insertI(that.children[0], '|');
-                insertA(that.children[0], 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format, '大图原始地址，在此点击右键可以另存图像或复制地址', '源');
-                insertI(that.children[0], '>');
-
+                insertEls(that.children[0], uid, mid, pid, format, cdn, false);
             }
         }
+        delete that;
+    }catch(err){}
+    }
+}
+
+//话题主入口
+function entryHuati(nodeMain){
+
+    nodeMain.addEventListener('DOMSubtreeModified',function(e){entrySub(e)}); //需要监听 dom
+
+    //子入口
+    function entrySub(e){
+    try{
+        var that = e.target || event.target;
+
+        //console.log(that);
+
+        //判断 event 节点是否符合要求
+        if(typeof(that.children) != 'undefined' && that.children.length > 0){
+
+            //火狐修正
+            if(isFirefox){
+                var browserTest = that.className.match('media_bigbox') != null && that.children.length > 0 && that.style.display != 'none';
+            }else{
+                var browserTest = that.className.match('media_bigbox') != null && that.children.length > 0;
+            }
+
+            //判断 event dom 是否为需要操作的 dom
+            if(browserTest){
+
+                if(that.className.match('media_bigbox') != null && that.children[0].getAttribute('node-type') != 'imagesBox'){
+                    that = that.children[0];
+                    var para = that.parentNode.parentNode.parentNode.getElementsByClassName('con_opt')[0].children[1].children[0].children[2].getAttribute('action-data');
+                    var format = that.children[0].children[4].href.replace(/.*(\....)$/,'$1');
+                    var cdn = that.children[0].children[4].href.replace(/^.*?\/\/ww(.).*/,'$1');
+                    var pid = that.children[0].children[4].href.replace(/.*large\/([\w]+)\..../,'$1');
+                    var mid = para.replace(/.*mid=(\d*)&?.*/,'$1');
+                    var uid = para.replace(/.*uid=(\d*)&?.*/,'$1');
+                    insertEls(that.children[0], uid, mid, pid, format, cdn, false);
+                }else{
+                    that = that.children[0];
+                    var para = that.children[0].children[4].href;
+                    var format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
+                    var cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                    var pid = para.replace(/.*\/pid\/(.*)\?.*/,'$1');
+                    var mid = para.replace(/.*\/mid\/(.*?)\/.*/,'$1');
+                    var uid = para.replace(/.*weibo.com\/(.*?)\/.*/,'$1');
+                    that.children[0].addEventListener('mouseover',function(){
+                        var para = that.children[0].children[4].href;
+                        var format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
+                        var cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                        var pid = para.replace(/.*\/pid\/(.*)\?.*/,'$1');
+                        var mid = para.replace(/.*\/mid\/(.*?)\/.*/,'$1');
+                        var uid = para.replace(/.*weibo.com\/(.*?)\/.*/,'$1');
+                        that.children[0].children[12].href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
+                        that.children[0].children[14].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
+                    });
+                    insertEls(that.children[0], uid, mid, pid, format, cdn, true);
+                }
+            }
+        }
+        delete that;
+    }catch(err){}
     }
 }

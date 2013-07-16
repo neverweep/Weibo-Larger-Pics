@@ -25,9 +25,13 @@
                     "e.weibo.com",
                     "s.weibo.com",
                     "hot.weibo.com",
+                    "media.weibo.com",
+                    "huati.weibo.com",
                 ],
                 "exclude": [
-                    "weibo.com/app",
+                    "weibo.com/app/",
+                    "s.weibo.com/user/",
+                    "s.weibo.com/pic/",
                 ],
                 "js": [
                     "WeiboLargerPics.user.js"

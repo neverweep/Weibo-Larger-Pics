@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Weibo Larger Pics \u65B0\u6D6A\u5FAE\u535A\u4E4B\u6211\u8981\u770B\u5927\u56FE",
   "description": "Easily view larger pics on Weibo.com \u5FEB\u901F\u8FDB\u5165\u5927\u56FE\u9875\u9762\u3001\u56FE\u7247\u8BE6\u60C5\u9875\u9762\u548C\u539F\u59CB\u5730\u5740\u3002",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "minimum_chrome_version": "21",
   "icons": {
     "128": "icons/icon_128.png",

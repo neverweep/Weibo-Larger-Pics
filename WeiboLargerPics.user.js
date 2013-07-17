@@ -2,7 +2,7 @@
 // @name           Weibo Larger Pics 新浪微博之我要看大图
 // @namespace      http://xiaoxia.de/
 // @description    Easily view larger pics on Weibo.com 快速进入大图页面、图片详情页面和原始地址。
-// @version        1.0.6
+// @version        1.0.7
 // @author         xiaoxia
 // @include        http://t.sina.com.cn/*
 // @include        http://weibo.com/*
@@ -168,12 +168,12 @@ function entryMain(nodeMain){
                         cdn = that.children[1].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');//图片 CDN 地址
                     }else{
                         //多图
-                        format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
-                        cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                        format = that.getElementsByTagName('IMG')[0].src.replace(/.*(\....)$/,'$1');
+                        cdn = that.getElementsByTagName('IMG')[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
                         //多图情况下，对更换图片事件进行监听
                         that.children[0].addEventListener('mouseover',function(){
-                            var format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
-                            var cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                            var format = that.getElementsByTagName('IMG')[0].src.replace(/.*(\....)$/,'$1');
+                            var cdn = that.getElementsByTagName('IMG')[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
                             if(search){
                                 //搜索多图
                                 var para = that.children[0].getElementsByClassName('show_big')[0].href;
@@ -350,15 +350,15 @@ function entryHuati(nodeMain){
                 }else{
                     that = that.children[0];
                     var para = that.children[0].children[4].href;
-                    var format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
-                    var cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                    var format = that.getElementsByTagName('IMG')[0].src.replace(/.*(\....)$/,'$1');
+                    var cdn = that.getElementsByTagName('IMG')[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
                     var pid = para.replace(/.*\/pid\/(.*)\?.*/,'$1');
                     var mid = para.replace(/.*\/mid\/(.*?)\/.*/,'$1');
                     var uid = para.replace(/.*weibo.com\/(.*?)\/.*/,'$1');
                     that.children[0].addEventListener('mouseover',function(){
                         var para = that.children[0].children[4].href;
-                        var format = that.children[1].children[0].children[0].children[0].children[0].src.replace(/.*(\....)$/,'$1');
-                        var cdn = that.children[1].children[0].children[0].children[0].children[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
+                        var format = that.getElementsByTagName('IMG')[0].src.replace(/.*(\....)$/,'$1');
+                        var cdn = that.getElementsByTagName('IMG')[0].src.replace(/^.*?\/\/ww(.).*/,'$1');
                         var pid = para.replace(/.*\/pid\/(.*)\?.*/,'$1');
                         var mid = para.replace(/.*\/mid\/(.*?)\/.*/,'$1');
                         var uid = para.replace(/.*weibo.com\/(.*?)\/.*/,'$1');

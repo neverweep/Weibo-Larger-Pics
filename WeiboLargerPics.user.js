@@ -2,7 +2,7 @@
 // @name           Weibo Larger Pics 新浪微博之我要看大图
 // @namespace      http://xiaoxia.de/
 // @description    Easily view larger pics on Weibo.com 快速进入大图页面、图片详情页面和原始地址。
-// @version        1.0.5
+// @version        1.0.6
 // @author         xiaoxia
 // @include        http://t.sina.com.cn/*
 // @include        http://weibo.com/*
@@ -16,12 +16,13 @@
 // @exclude        http://s.weibo.com/pic/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
-// @updateinfo     增加搜索、企业版、热门、媒体版、话题支持
+// @updateURL      https://userscripts.org/scripts/source/173273.meta.js
+// @downloadURL    https://userscripts.org/scripts/source/173273.user.js
+// @updateinfo     修正 ajax 后失效的问题；
 // ==/UserScript==
 
-//version for auto update
-var version = "1.0.5";
-var modifyDate = "2013-07-16";
+
+window.setTimeout(function(){ //匿名函数延时 500ms 执行，避免执行时 dom 还未创建。
 
 var isFirefox = navigator.userAgent.toLowerCase().match('firefox') != null; //判断是否为 firefox，firefox 似乎会在 dom 改变之前响应事件，别的浏览器都是在 dom 改变之后。
 var enterprise = window.location.host == 'e.weibo.com'; //判断企业版微博
@@ -33,11 +34,11 @@ var huati = window.location.host == 'huati.weibo.com'; //判断话题页面
 //判断页面类型
 if(document.getElementById('pl_content_homeFeed') != null){
     //本人时间线
-    var nodeListen = document.getElementById('pl_content_homeFeed');
+    var nodeListen = document.getElementsByClassName('W_main')[0];
     entryMain(nodeListen);
 }else if(document.getElementById('pl_content_hisFeed') != null){
      //他人时间线 包含企业版和普通用户
-    var nodeListen = document.getElementById('pl_content_hisFeed');
+    var nodeListen = document;
     entryMain(nodeListen);
 }else if(document.getElementById('pl_weibo_feedlist') != null && search){
     //搜索页面
@@ -51,10 +52,6 @@ if(document.getElementById('pl_content_homeFeed') != null){
     //媒体版页面
     var nodeListen = document.getElementById('epfeedlist');
     entryMedia(nodeListen); //媒体版差异（可能）较大，使用独立的入口
-}else if(document.getElementById('Pl_Core_OwnerFeed__5') != null){
-    //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
-    var nodeListen = document.getElementById('Pl_Core_OwnerFeed__5');
-    entryMain(nodeListen);
 }else if(document.getElementById('pl_content_topicHotFeed') != null && huati){
     //话题
     var nodeListen_1 = document.getElementById('pl_content_topicHotFeed');//相关话题里面的热门微博
@@ -65,6 +62,10 @@ if(document.getElementById('pl_content_homeFeed') != null){
     }
     entryHuati(nodeListen_1); //使用独立入口
     entryHuati(nodeListen_2); //使用独立入口
+}else if(document.getElementById('plc_main') != null){
+    //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
+    var nodeListen = document.getElementById('plc_main');
+    entryMain(nodeListen);
 }
 
 //插入 a 标签
@@ -372,3 +373,4 @@ function entryHuati(nodeMain){
     }catch(err){}
     }
 }
+}, 500);

@@ -3,7 +3,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.1.4
+// @version        1.2.1.5
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -23,7 +23,7 @@
 // @exclude        http://weibo.com/app
 // @updateURL      https://userscripts.org/scripts/source/173273.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     增强键盘功能；加入定位到图片所在微博的按钮
+// @updateinfo     过滤来自 service.mix.sina 的图片；修正 Firefox 多图浏览出现重复按钮的问题
 // ==/UserScript==
 
 
@@ -49,7 +49,7 @@ var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++
 /* -全局变量和常量- */
 
 //加入需要的 CSS
-addStyleCompatible('/* 选项 */.wlp_btn_grey a{color:#999 !important}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .5s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover{text-decoration:none;background:#2AF;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
+addStyleCompatible('/* 选项 */.wlp_btn_grey a{color:#999 !important}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .3s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover{text-decoration:none;background:#2AF;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
 
 //基本变量
 var uid, pid, mid, format, para, cdn, multiPics, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent;
@@ -154,7 +154,7 @@ var insertEls = function(node, uid, mid, pid, format, cdn, multiPics){
     aElement.title = '使用画廊模式浏览本页大图';
     aElement.href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
     aElement.onclick = function(){
-        imgs = document.querySelectorAll('img.bigcursor, img.imgicon');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"]');
         src = this.href;
         for(var i in imgs){
             //获取当前图片的次序
@@ -242,7 +242,7 @@ var entryLarge = {
         uid = para[2];
 
         if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.children[0], uid, mid, pid, format, cdn, multiPics);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
         }else if(that.className.indexOf('expand') === -1){
             format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
             cdn = that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
@@ -277,7 +277,7 @@ var entryLarge = {
         pid = that.children[1].src.replace(/.*\/([\w]+)\..../, '$1');
 
         if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.children[0], uid, mid, pid, format, cdn, false);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, false);
         }
     },
 
@@ -300,7 +300,7 @@ var entryLarge = {
         pid = para.replace(reg9, '$1');
 
         if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.children[0], uid, mid, pid, format, cdn, multiPics);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
         }
     },
 
@@ -330,7 +330,7 @@ var entryLarge = {
         }
 
         if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.children[0], uid, mid, pid, format, cdn, multiPics);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
         }else{
             format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
             cdn = that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
@@ -373,7 +373,7 @@ var entryLarge = {
         pid = para.replace(reg9, '$1');
 
         if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.children[0], uid, mid, pid, format, cdn, multiPics);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
         }else{
             format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
             cdn = that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
@@ -398,7 +398,7 @@ var entryLarge = {
             pid = that.children[0].children[4].href.replace(reg8, '$1');
             mid = para.replace(reg5, '$1');
             uid = para.replace(reg4, '$1');
-            insertEls(that.children[0], uid, mid, pid, format, cdn, false);
+            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, false);
         }else{
             that = that.parentNode.parentNode.parentNode;
             para = that.children[0].children[4].href;
@@ -409,7 +409,7 @@ var entryLarge = {
             uid = para.replace(reg3, '$1');
 
             if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-                insertEls(that.children[0], uid, mid, pid, format, cdn, true);
+                insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, true);
             }else{
                 para = that.children[0].children[4].href;
                 format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
@@ -508,54 +508,48 @@ if(_on){
     var bindSmall = {
 
         main : function(){
-            wlp_bind.Main = addNodeInsertedListener('img.bigcursor:hover', function(e){
+            wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.main(that);
             });
         },
 
         media : function(){
-            wlp_bind.Media = addNodeInsertedListener('img.imgicon:hover', function(e){
+            wlp_bind.Media = addNodeInsertedListener('img.imgicon[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.media(that);
             });
         },
 
         enterprise : function(){
-            wlp_bind.Enterprise = addNodeInsertedListener('img.bigcursor:hover', function(e){
+            wlp_bind.Enterprise = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.enterprise(that);
             });
         },
 
         hot : function(){
-            wlp_bind.Hot = addNodeInsertedListener('img.bigcursor:hover', function(e){
+            wlp_bind.Hot = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.hot(that);
             });
         },
 
         search : function(){
-            wlp_bind.Search = addNodeInsertedListener('img.bigcursor:hover', function(e){
+            wlp_bind.Search = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.search(that);
             });
         },
 
         huati : function(){
-            wlp_bind.Huati = addNodeInsertedListener('img.bigcursor:hover', function(e){
+            wlp_bind.Huati = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
-                if(that.src.indexOf('service.mix') > 0){return;}
                 wlp_floatbar.close();
                 entrySmall.huati(that);
             });
@@ -697,7 +691,7 @@ if(_on){
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
     $id('wlp_floatbar_5').onclick = function(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor, img.imgicon');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"]');
         src = $id('wlp_floatbar_3').href;
         for(var i in imgs){
             //获取当前图片的次序
@@ -924,7 +918,7 @@ var setTrans = function(scale, rotate){
             imgDiv.style.visibility = 'hidden';
             //置入一个 1X1 的 png 清空之前的图像
             img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACXZwQWcAAAABAAAAAQDHlV/tAAAAAnRSTlMA/1uRIrUAAAAKSURBVAjXY/gPAAEBAQAbtu5WAAAAAElFTkSuQmCC';
-        }, 500);
+        }, 300);
         _view = true;
         imgDiv.style.opacity = '0';
         document.onkeydown = null;

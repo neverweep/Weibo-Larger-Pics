@@ -3,7 +3,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.1.6
+// @version        1.2.1.7
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -23,7 +23,7 @@
 // @exclude        http://weibo.com/app
 // @updateURL      https://userscripts.org/scripts/source/173273.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     修复左右按键触发原页面事件的问题
+// @updateinfo     修复按键触发原页面事件的问题
 // ==/UserScript==
 
 
@@ -972,7 +972,7 @@ var bindDocument = function(){
         e = e || window.event;
         e.cancelBubble = true;
         //上下左右和空格不触发页面滚动和事件
-        if(e.keyCode.toString().indexOf('32 37 38 39 40') >= 0){
+        if(e.keyCode == '32' || e.keyCode == '37' || e.keyCode == '38' || e.keyCode == '39' || e.keyCode == '40' ){
             e.stopPropagation();
             e.preventDefault();
             e.returnValue = false;

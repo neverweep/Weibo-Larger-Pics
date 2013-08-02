@@ -3,7 +3,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.1.5
+// @version        1.2.1.6
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -23,7 +23,7 @@
 // @exclude        http://weibo.com/app
 // @updateURL      https://userscripts.org/scripts/source/173273.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     过滤来自 service.mix.sina 的图片；修正 Firefox 多图浏览出现重复按钮的问题
+// @updateinfo     修复左右按键触发原页面事件的问题
 // ==/UserScript==
 
 
@@ -971,8 +971,8 @@ var bindDocument = function(){
     document.onkeydown = function(e){
         e = e || window.event;
         e.cancelBubble = true;
-        //上下和空格不触发页面滚动
-        if(e.keyCode == 38 || e.keyCode == 32 || e.keyCode == 40){
+        //上下左右和空格不触发页面滚动和事件
+        if(e.keyCode.toString().indexOf('32 37 38 39 40') >= 0){
             e.stopPropagation();
             e.preventDefault();
             e.returnValue = false;

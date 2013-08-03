@@ -3,7 +3,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.2.0
+// @version        1.2.2.1
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -23,7 +23,7 @@
 // @exclude        http://weibo.com/app
 // @updateURL      https://userscripts.org/scripts/source/173273.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     加入选择图片服务器功能，某些情况下会有更好的图片加载速度
+// @updateinfo     修正服务器选择界面和程序的错误
 // ==/UserScript==
 
 
@@ -49,7 +49,7 @@ var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++
 /* -全局变量和常量- */
 
 //加入需要的 CSS
-addStyleCompatible('/* 选项 */.wlp_btn_grey a{color:#999 !important}#wlp_cdn{position:fixed;top:20%;width:100%;z-index:999999}#wlp_cdn>div{width:600px;background:#FFF;border:1px solid #CCC;padding:20px;margin:0 auto}#wlp_cdn span{margin:0 5px;display:inline-block;width:5em}#wlp_cdn p{margin:1em 0}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .3s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a, #wlp_cdn a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover, #wlp_cdn a:hover{text-decoration:none;background:#2AF;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
+addStyleCompatible('/* 选项 */.wlp_btn_grey a{color:#999 !important}#wlp_cdn{position:fixed;top:20%;width:100%;z-index:999999}#wlp_cdn>div{width:600px;background:#FFF;border:1px solid #CCC;padding:20px;margin:0 auto}#wlp_cdn span{margin:0 5px;display:inline-block;width:5em;text-align:right}#wlp_cdn p{margin:1em 0}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .3s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a, #wlp_cdn a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover, #wlp_cdn a:hover{text-decoration:none;background:#2AF;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
 
 //选项保存方法
 var save = function(name, value){
@@ -1074,12 +1074,12 @@ var dragF = {
 };
 
 /* -测速- */
-
+//建立选项界面
 var cdnUI = function(){
     if(document.querySelectorAll('#wlp_cdn').length === 0){
         var div = document.createElement('div');
         div.id = 'wlp_cdn';
-        div.innerHTML = '<div><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。</p><p>通常情况新浪的图片服务器会根据你的地址和网络选择最合适的服务器和 CDN，但是有时新浪指定的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“自动”，仅在某些图片无法加载时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下单位为 ms，最后一列为三次测速平均值。</p><p>ww1：<span id="wlp_cdn_1"></span><span id="wlp_cdn_5"></span><span id="wlp_cdn_9"></span><span id="wlp_cdn_13"></span></p><p>ww2：<span id="wlp_cdn_2"></span><span id="wlp_cdn_6"></span><span id="wlp_cdn_10"></span><span id="wlp_cdn_14"></span></p><p>ww3：<span id="wlp_cdn_3"></span><span id="wlp_cdn_7"></span><span id="wlp_cdn_11"></span><span id="wlp_cdn_15"></span></p><p>ww4：<span id="wlp_cdn_4"></span><span id="wlp_cdn_8"></span><span id="wlp_cdn_12"></span><span id="wlp_cdn_16"></span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">自动</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test">测速</a><a id="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save">一直使用</a><a id="wlp_cdn_exit">取消</a></p></div>';
+        div.innerHTML = '<div><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。</p><p>通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a><a id="wlp_cdn_exit" name="wlp_cdn_exit">取消</a></p></div>';
         document.body.appendChild(div);
         //根据设置确定显示
         $id('wlp_cdn_option').value = _cdn;
@@ -1089,14 +1089,14 @@ var cdnUI = function(){
         $id('wlp_cdn_temp').onclick = function(){
             _cdn = parseInt($id('wlp_cdn_option').value);
             $id('wlp_cdn').style.display = 'none';
-            $id('wlp_cdn_btn').innerHTML = '看大图 CDN（' + _cdn + '）'; //更改选项文字
+            $id('wlp_cdn_btn').innerHTML = '看大图服务器（' + _cdn + '）'; //更改选项文字
         }
         //永久保存
         $id('wlp_cdn_save').onclick = function(){
             _cdn = parseInt($id('wlp_cdn_option').value);
             save('cdn', _cdn);
             $id('wlp_cdn').style.display = 'none';
-            $id('wlp_cdn_btn').innerHTML = '看大图 CDN（' + _cdn + '）';
+            $id('wlp_cdn_btn').innerHTML = '看大图服务器（' + _cdn + '）';
         }
         //退出
         $id('wlp_cdn_exit').onclick = function(){$id('wlp_cdn').style.display = 'none';}
@@ -1105,8 +1105,12 @@ var cdnUI = function(){
         $id('wlp_cdn').style.display = 'block';
     }
 }
-
+//测速
 var cdnTest = function(){
+    var nodes = $id('wlp_cdn').querySelectorAll('span');
+    for(var z in nodes){
+        nodes[z].innerHTML = '-';
+    }
     var j = 0, n = 0, cdnt;
     var s = '.sinaimg.cn/large/74435927gw1e755qorypbj219x0uk4a8.jpg?';
     var cdnimg = document.createElement('img');
@@ -1121,20 +1125,22 @@ var cdnTest = function(){
         result.push(end - start);
         $id('wlp_cdn_' + j).innerHTML = end - start;
         start = end;
-        if(j == 12){
-            clearTimeout(cdnt);
+        // j >= 12 时计算平均加载时间并跳出
+        if(j >= 12){
             $id('wlp_cdn_13').innerHTML = Math.round((result[0] + result[4] + result[8]) / 3);
             $id('wlp_cdn_14').innerHTML = Math.round((result[1] + result[5] + result[9]) / 3);
             $id('wlp_cdn_15').innerHTML = Math.round((result[2] + result[6] + result[10]) / 3);
             $id('wlp_cdn_16').innerHTML = Math.round((result[3] + result[7] + result[11]) / 3);
-            document.body.removeChild(cdnimg);
+            document.body.removeChild(cdnimg); //删除测试节点
             return true;
         }
         cdnimg.src = 'http://ww' + n + s + start;
-        cdnt = setTimeout(function(){
+        //图片加载超时处理
+        cdnt = window.setTimeout(function(){
             result[j] = 5000;
-            $id('wlp_cdn_' + j).innerHTML = end - start;
-            cdnimg.src = 'http://ww' + (n + 1) + s + start;
+            n = j++ % 4 + 1;
+            $id('wlp_cdn_' + j).innerHTML = '超时';
+            cdnimg.src = 'http://ww' + n + s + start;
         }, 5000);
     }
     cdnimg.src = 'http://ww1' + s + start;

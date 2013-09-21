@@ -3,7 +3,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.2.1
+// @version        1.2.3.0
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -23,7 +23,7 @@
 // @exclude        http://weibo.com/app
 // @updateURL      https://userscripts.org/scripts/source/173273.meta.js
 // @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     修正服务器选择界面和程序的错误
+// @updateinfo     将选项统一到一个界面；增加了设置画廊模式初始图像比例的选项；修正了图像服务器测速计时的 bug
 // ==/UserScript==
 
 
@@ -45,11 +45,44 @@ function addStyleCompatible(a){var b,d,c;'undefined'!=typeof GM_addStyle?'undefi
  */
 var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++)e[t].end?e.splice(t--,1):e[t]();!e.length&&r()},r=function(){clearInterval(t),t=null};return function(r,i,s,o){var u,a,f,l,c,h=new Image;h.src=r;if(h.complete){i.call(h),s&&s.call(h);return}a=h.width,f=h.height,h.onerror=function(){o&&o.call(h),u.end=!0,h=h.onload=h.onerror=null},u=function(){l=h.width,c=h.height;if(l!==a||c!==f||l*c>1024)i.call(h),u.end=!0},u(),h.onload=function(){!u.end&&u(),s&&s.call(h),h=h.onload=h.onerror=null},u.end||(e.push(u),t===null&&(t=setInterval(n,40)))}}();
 
+/* -全局- */
 
-/* -全局变量和常量- */
-
-//加入需要的 CSS
-addStyleCompatible('/* 选项 */.wlp_btn_grey a{color:#999 !important}#wlp_cdn{position:fixed;top:20%;width:100%;z-index:999999}#wlp_cdn>div{width:600px;background:#FFF;border:1px solid #CCC;padding:20px;margin:0 auto}#wlp_cdn span{margin:0 5px;display:inline-block;width:5em;text-align:right}#wlp_cdn p{margin:1em 0}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .3s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a, #wlp_cdn a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover, #wlp_cdn a:hover{text-decoration:none;background:#2AF;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
+//判断浏览器以确定读取和储存方法
+var _type, _on, _mode, _css, _cdn;
+typeof(document.body.style.transform) === 'undefined' ? _css = false : _css = true; //判断浏览器是否支持标准 css 属性
+var GM_getValue;
+if(typeof(GM_getValue) !== 'undefined'){
+    //Firefox 和 Chrome + Tampermonkey 和其它使用 GM 的浏览器使用 GM 方法储存
+    _on = GM_getValue('floatbar', true);
+    _mode = GM_getValue('mode', true);
+    __view = GM_getValue('view', true);
+    _cdn = GM_getValue('cdn', 0);
+    _type = 1;
+}else if(typeof(window.chrome) !== 'undefined'){
+    //Chrome 使用 localstorage 储存
+    _on = localStorage['floatbar'] === 'true' || typeof(localStorage['floatbar']) === 'undefined';
+    _mode = localStorage['mode'] === 'true' || typeof(localStorage['mode']) === 'undefined';
+    __view = localStorage['view'] === 'true' || typeof(localStorage['view']) === 'undefined';
+    _cdn = typeof(localStorage['cdn']) === 'undefined' ?  0 : parseInt(localStorage['cdn']);
+    _type = 2;
+}else if(typeof(window.external.mxGetRuntime) !== 'undefined'){
+    //Maxthon 插件版使用原生接口储存
+    var pb = window.external.mxGetRuntime();
+    _on = window.pb.storage.getConfig('floatbar');
+    _on = (_on === '' || _on === 'true');
+    _mode = window.pb.storage.getConfig('mode');
+    _mode = (_mode === '' || _mode === 'true');
+    __view = window.pb.storage.getConfig('view');
+    __view = (__view === '' || __view === 'true');
+    _cdn = window.pb.storage.getConfig('cdn');
+    _cdn = (_cdn === '' || _cdn === '0') ? 0 : parseInt(_cdn);
+    _type = 3;
+}else{
+    //以上都不支持的浏览器常开
+    _on = true;
+    _mode = true;
+    __view = true;
+}
 
 //选项保存方法
 var save = function(name, value){
@@ -63,37 +96,9 @@ var save = function(name, value){
     }
 }
 
-//判断浏览器以确定储存方法
-var _type, _on, _mode, _css, _cdn;
-typeof(document.body.style.transform) === 'undefined' ? _css = false : _css = true; //判断浏览器是否支持标准 css 属性
-var GM_getValue;
-if(typeof(GM_getValue) !== 'undefined'){
-    //Firefox 和 Chrome + Tampermonkey 和其它使用 GM 的浏览器使用 GM 方法储存
-    _on = GM_getValue('floatbar', true);
-    _mode = GM_getValue('mode', true);
-    _cdn = GM_getValue('cdn', 0);
-    _type = 1;
-}else if(typeof(window.chrome) !== 'undefined'){
-    //Chrome 使用 localstorage 储存
-    _on = localStorage['floatbar'] === 'true' || typeof(localStorage['floatbar']) === 'undefined';
-    _mode = localStorage['mode'] === 'true' || typeof(localStorage['mode']) === 'undefined';
-    _cdn = typeof(localStorage['cdn']) === 'undefined' ?  0 : parseInt(localStorage['cdn']);
-    _type = 2;
-}else if(typeof(window.external.mxGetRuntime) !== 'undefined'){
-    //Maxthon 插件版使用原生接口储存
-    var pb = window.external.mxGetRuntime();
-    _on = window.pb.storage.getConfig('floatbar');
-    _on = (_on === '' || _on === 'true');
-    _mode = window.pb.storage.getConfig('mode');
-    _mode = (_mode === '' || _mode === 'true');
-    _cdn = window.pb.storage.getConfig('cdn');
-    _cdn = (_cdn === '' || _cdn === '0') ? 0 : parseInt(_cdn);
-    _type = 3;
-}else{
-    //以上都不支持的浏览器常开
-    _on = true;
-    _mode = true;
-}
+
+//加入需要的 CSS
+addStyleCompatible('/* 选项 */#wlp_cdn{position:fixed;top:10%;width:100%;z-index:999999}#wlp_cdn>div{width:600px;background:#FFF;border:1px solid #CCC;padding:20px;margin:0 auto}#wlp_cdn span{margin:0 5px;display:inline-block;width:5em;text-align:right}#wlp_cdn p{margin:1em 0}/* 画廊 */#wlp_img_wrap{-moz-user-select:none;-webkit-user-select:none;user-select: none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:9999;background:rgba(0,0,0,.95);opacity:0;visibility:hidden;transition:opacity .3s ease-out 0s;}#wlp_img_drag{position:absolute;z-index:100;}#wlp_img{transition:opacity .2s ease-out 0s;opacity:0}#wlp_img_controler{opacity:.4;transition:opacity .3s ease-out 0s;position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.7);text-align:center;z-index:100}#wlp_img_controler:hover{opacity:1 !important;}#wlp_img_controler a, #wlp_cdn a{color:#333;padding:5px 10px;border:1px solid #CCC;border-radius:3px;background:#FFF;margin:10px 20px;display:inline-block;line-height:1}#wlp_img_controler a:hover, #wlp_cdn a:hover{text-decoration:none;background:grey;color:#FFF;cursor:pointer}#wlp_img_ratio{width:2em}#wlp_img_pullleft{position:absolute;left:0;line-height:1}#wlp_img_pullright{position:absolute;right:0;line-height:1}#wlp_img_noti{position:absolute;left:48%;top:50%;color:#FFF}#wlp_img_user{position:fixed;right:20px;top:20px;padding:0}#wlp_img_user a{border:none !important;border-radius:5px;padding:0;overflow:hidden;background:transparent !important}/* 浮动栏 */#wlp_floatbar{background:#FFF;border:1px solid #CCC;border-radius:3px;width:28px;overflow:hidden;position:absolute;padding:8px 2px;text-align:center;line-height:1.9;z-index:9998;opacity:0;transition:opacity 0.1s ease-out 0s}#wlp_floatbar:hover{border-color:#3BF}#wlp_floatbar a{display:block}.wlp_floatbar_hide{display:none !important}');
 
 //基本变量
 var uid, pid, mid, format, para, cdn, multiPics, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent;
@@ -770,7 +775,7 @@ var setTrans = function(scale, rotate){
 //建立图像层
     var imgDiv = document.createElement('div');
     imgDiv.id = 'wlp_img_wrap';
-    imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">服务器</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张</a><a id="wlp_img_left">向左转</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1.0</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right">向右转</a><a id="wlp_img_next" title="浏览下一张图片">下一张</a><span id="wlp_img_pullright"><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看此微博</a><a href="javascript:;" id="wlp_img_exit" >退出</a></span></div><div id="wlp_img_noti"></div></div>';
+    imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">设置</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张</a><a id="wlp_img_left">向左转</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right">向右转</a><a id="wlp_img_next" title="浏览下一张图片">下一张</a><span id="wlp_img_pullright"><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看此微博</a><a href="javascript:;" id="wlp_img_exit" >退出</a></span></div><div id="wlp_img_noti"></div></div>';
     document.body.appendChild(imgDiv);
 
     //图像滚动
@@ -871,7 +876,7 @@ var setTrans = function(scale, rotate){
         alert('鼠标操作：\n\n缩放图片：在图片上滚动鼠标滚轮可以放大缩小图像。\n拖动图片：在图片上按住鼠标左键可以自由拖动图片。\n滚动图片：在空白区域滚动滚轮可以滚动图片。\n\n退出画廊模式：双击图片\n\n\n\n键盘操作：\n\n左右方向：切换图片。\n上下方向：滚动图片。\nZ、C：旋转图像。\nX：切换图像模式。\nV：定位到该微博。\n空格：1:1 与初始状态切换。\n\nESC：退出画廊模式。')
     }
     //缩放 1：1 按钮
-    $id('wlp_img_ori').onclick = function(){scaleOri();}
+    $id('wlp_img_ori').onclick = function(){_view = false;calcPos(img.height, img.width, '');}
 
 //其他地方需要用到的元素
     var ratio = $id('wlp_img_ratio');
@@ -882,10 +887,11 @@ var setTrans = function(scale, rotate){
     mode.onclick = function(){changeMode();}
     //显示缩放比例和适合屏幕的按钮
     ratio.onclick = function(){
+        _view = true;
         calcPos(img.height, img.width, '');
     }
     //空格切换状态按钮，true 时应为适合屏幕缩放状态
-    _view = true;
+    _view = __view;
 //复用函数
     //1:1
     var scaleOri = function(){
@@ -895,6 +901,7 @@ var setTrans = function(scale, rotate){
             img.parentNode.style.top = '40px'; //图像上边不超过屏幕，阅读长微博很合适
         }
         ratio.innerHTML = '1';
+        _view = false;
     }
     //切换模式
     var changeMode = function(){
@@ -902,7 +909,7 @@ var setTrans = function(scale, rotate){
         it = setTimeout(function(){
             img.style.visibility = 'hidden';
         }, 200);
-        _view = true;
+        _view = __view;
         noti.innerHTML = '正在读取...';
         img.style.opacity = '0';
         _mode = _mode === true ? false : true;
@@ -941,14 +948,14 @@ var setTrans = function(scale, rotate){
             //置入一个 1X1 的 png 清空之前的图像
             img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACXZwQWcAAAABAAAAAQDHlV/tAAAAAnRSTlMA/1uRIrUAAAAKSURBVAjXY/gPAAEBAQAbtu5WAAAAAElFTkSuQmCC';
         }, 300);
-        _view = true;
+        _view = __view;
         imgDiv.style.opacity = '0';
         document.onkeydown = null;
     }
     //下一张
     var nextImg = function(){
         clearTimeout(it); //清除之前的定时
-        _view = true; //将浏览比例标志重置
+        _view = __view; //将浏览比例标志重置
         noti.innerHTML = '正在读取...';
         img.style.opacity = '0'; //先把图像透明，读取后再显示
         it = setTimeout(function(){
@@ -963,7 +970,7 @@ var setTrans = function(scale, rotate){
     //上一张
     var prevImg = function(){
         clearTimeout(it);
-        _view = true;
+        _view = __view;
         noti.innerHTML = '正在读取...';
         img.style.opacity = '0';
         it = setTimeout(function(){
@@ -996,14 +1003,14 @@ var bindDocument = function(){
         e = e || window.event;
         e.cancelBubble = true;
         //上下左右和空格不触发页面滚动和事件
-        if(e.keyCode == '32' || e.keyCode == '37' || e.keyCode == '38' || e.keyCode == '39' || e.keyCode == '40' ){
+        if('32 37 38 39 40'.indexOf(e.keyCode.toString()) >= 0){
             e.stopPropagation();
             e.preventDefault();
             e.returnValue = false;
         }
         switch(e.keyCode){//ESC 空格 右上左下 Z C X V
             case 27 : exitGallery();break;
-            case 32 : _view === false ? calcPos(img.height, img.width, '') : scaleOri();_view = !_view;break;
+            case 32 : calcPos(img.height, img.width, '');break;
             case 37 : prevImg();break; 
             case 38 : img.parentNode.style.top = parseInt(img.parentNode.style.top.replace('px','')) + 30 + 'px';break;
             case 39 : nextImg();break;
@@ -1018,12 +1025,12 @@ var bindDocument = function(){
 
 //根据图像大小，计算图像位置和缩放程度
 var calcPos = function(height, width, src){
-    if(height > window.innerHeight * 0.8){
+    if(height > window.innerHeight * 0.8 && _view === true){
         var imgHeightRatio = (window.innerHeight - 50) * 0.8 / height;
     }else{
         var imgHeightRatio = 1;
     }
-    if(width > document.body.offsetWidth * 0.8){
+    if(width > document.body.offsetWidth * 0.8 && _view === true){
         var imgWidthRatio = document.body.offsetWidth * 0.8 / width;
     }else{
         var imgWidthRatio = 1;
@@ -1036,6 +1043,7 @@ var calcPos = function(height, width, src){
         img.src = src;
     }
     ratio.innerHTML = scale;
+    if(_view === false){scaleOri();_view = true}else{_view = false};
 }
 
 //图像拖曳
@@ -1079,24 +1087,38 @@ var cdnUI = function(){
     if(document.querySelectorAll('#wlp_cdn').length === 0){
         var div = document.createElement('div');
         div.id = 'wlp_cdn';
-        div.innerHTML = '<div><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。</p><p>通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a><a id="wlp_cdn_exit" name="wlp_cdn_exit">取消</a></p></div>';
+        div.innerHTML = '<div><h4>新浪微博之我要看大图 - 设置</h4><br/><hr><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。超时记为 5000 毫秒。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a></p><hr><p><label><input type="checkbox" id="wlp_view"> 画廊模式优先使用自动缩放图像</label></p><p><label><input type="checkbox" id="wlp_floatbar_option"> 启用图像浮动工具栏</label></p><hr><p><a href="http://xiaoxia.de/">我的博客</a><a href="http://goo.gl/jJM0c">反馈</a><a href="http://userscripts.org/scripts/show/173273">UserScript</a><a id="wlp_cdn_exit" style="float:right" name="wlp_cdn_exit">关闭</a></p></div>';
         document.body.appendChild(div);
         //根据设置确定显示
         $id('wlp_cdn_option').value = _cdn;
+        $id('wlp_view').checked = __view;
+        $id('wlp_floatbar_option').checked = wlp_floatbar.status;
         //测试 CDN 速度
         $id('wlp_cdn_test').onclick = function(){cdnTest();}
         //此页临时保存
         $id('wlp_cdn_temp').onclick = function(){
             _cdn = parseInt($id('wlp_cdn_option').value);
-            $id('wlp_cdn').style.display = 'none';
-            $id('wlp_cdn_btn').innerHTML = '看大图服务器（' + _cdn + '）'; //更改选项文字
         }
         //永久保存
         $id('wlp_cdn_save').onclick = function(){
             _cdn = parseInt($id('wlp_cdn_option').value);
             save('cdn', _cdn);
-            $id('wlp_cdn').style.display = 'none';
-            $id('wlp_cdn_btn').innerHTML = '看大图服务器（' + _cdn + '）';
+        }
+        //保存缩放图像设置
+        $id('wlp_view').onchange = function(){
+            _view = __view = this.checked;
+            save('view', __view);
+        }
+        //保存浮动工具栏设置
+        $id('wlp_floatbar_option').onchange = function(){
+            if(this.checked === false){
+                save('floatbar', false);
+                wlp_floatbar.remove();
+                wlp_floatbar.status = false;
+            }else{
+                save('floatbar', true);
+                confirm('重新开启浮动栏需要刷新页面。\n\n点击“确定”立即刷新页面；\n点击“取消”那就待会儿再说~') === true ? window.location.reload() : true;
+            }
         }
         //退出
         $id('wlp_cdn_exit').onclick = function(){$id('wlp_cdn').style.display = 'none';}
@@ -1141,6 +1163,8 @@ var cdnTest = function(){
             n = j++ % 4 + 1;
             $id('wlp_cdn_' + j).innerHTML = '超时';
             cdnimg.src = 'http://ww' + n + s + start;
+            start = new Date().getTime();
+            clearTimeout(cdnt);
         }, 5000);
     }
     cdnimg.src = 'http://ww1' + s + start;
@@ -1178,41 +1202,16 @@ if($id('pl_content_homeFeed') !== null){
 }
 
 //建立选项元素
-//浮动栏
-var option1 = document.createElement('li');
-option1.title = '新浪微博之我要看大图浮动工具栏设置';
-if(_on){
-    option1.innerHTML = '<a href="javascript:;" id="wlp_floatbar_btn">看大图浮动栏（开）</a>';
-}else{
-    option1.innerHTML = '<a href="javascript:;" id="wlp_floatbar_btn">看大图浮动栏（关）</a>';
-    option1.className = 'wlp_btn_grey';
-}
 //CDN
 var option2 = document.createElement('li');
-option2.title = '新浪微博之我要看大图服务器设置';
-option2.innerHTML = '<a href="javascript:;" id="wlp_cdn_btn">看大图服务器（' + _cdn + '）</a>';
+option2.title = '新浪微博之我要看大图设置';
+option2.innerHTML = '<a href="javascript:;" id="wlp_cdn_btn">我要看大图设置</a>';
 
 
 //设置菜单 dom 建立时将选项添加到设置菜单
 var bindOption = addNodeInsertedListener('.gn_text_list li a', function(){
-    document.getElementsByClassName('gn_text_list')[3].appendChild(option1);
     document.getElementsByClassName('gn_text_list')[3].appendChild(option2);
-    option1 = null;
     option2 = null;
-
-    //选项按钮相关
-    $id('wlp_floatbar_btn').onclick = function(){
-        if(wlp_floatbar.status){
-            save('floatbar', false);
-            btn.parentNode.className = 'wlp_btn_grey';
-            btn.innerHTML = '看大图浮动栏（关）';
-            wlp_floatbar.remove();
-            wlp_floatbar.status = false;
-        }else{
-            save('floatbar', true);
-            confirm('重新开启浮动栏需要刷新页面。\n\n点击“确定”立即刷新页面；\n点击“取消”那就待会儿再说~') === true ? window.location.reload() : true;
-        }
-    };
     
     $id('wlp_cdn_btn').onclick = function(){cdnUI();}
 

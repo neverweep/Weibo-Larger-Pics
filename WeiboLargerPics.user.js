@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name           新浪微博之我要看大图 Weibo Larger Pics
 // @namespace      http://xiaoxia.de/
-// @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏、图片框增加按钮：快速进入大图页面、图片详情页面和原始地址。
+// @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.3.0
+// @version        1.2.3.1
 // @author         xiaoxia
 // @grant          GM_setValue
 // @grant          GM_getValue
@@ -131,322 +131,6 @@ var wlp_bind = {};
 //浮动栏对象
 var wlp_floatbar = {};
 
-
-/* -大图- */
-
-//大图插入按钮
-var insertEls = function(node, uid, mid, pid, format, cdn, multiPics){
-
-    //插入 a 标签
-    var insertA = function(node, href, title, inner){
-        var aElement = document.createElement('a');
-        aElement.href = href;
-        aElement.target = '_blank';
-        aElement.innerHTML = inner;
-        aElement.title = title;
-        node.appendChild(aElement);
-    };
-
-    //插入 i 标签
-    var insertI = function(node, symbol){
-        var iElement = document.createElement('i');
-        iElement.className = 'W_vline W8_vline wlp_el MIB_line_l';
-        iElement.innerHTML = symbol;
-        node.appendChild(iElement);
-    };
-
-    //大图地址
-    insertI(node,'<');
-    insertA(node, 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid, '进入相册大图页面', '图');
-
-    //相册详情，多图模式下无法获得 mid，所以不显示
-    if(!multiPics){
-        insertI(node, '|');
-        insertA(node, 'http://photo.weibo.com/' + uid + '/talbum/detail/photo_id/' + mid, '进入相册详情页面，这里可以看到图片的全部评论', '详');
-    }
-
-    //原图地址
-    insertI(node, '|');
-    insertA(node, 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format, '大图原始地址，在此点右键可以另存图像或者复制地址转发给别人', '源');
-
-    //画廊
-    insertI(node, '|');
-    var aElement = document.createElement('a');
-    aElement.innerHTML = '览';
-    aElement.title = '使用画廊模式浏览本页大图';
-    aElement.href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-    aElement.onclick = function(){
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"]');
-        src = this.href.replace(/.*\/(.*)/, '$1');
-        for(var i in imgs){
-            //获取当前图片的次序
-            if(imgs[i].src.replace(/.*\/(.*)/, '$1') === src){
-                imgNum = i;
-                break;
-            }
-        }
-        _mode === true ? src = this.href : src = this.href.replace('large', 'bmiddle');  //根据浏览模式决定大图小图
-        _cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + _cdn + '.');  //根据 CDN 设置地址
-        imgReady(src, function(){calcPos(this.height, this.width, src)});
-        imgDiv.style.visibility = 'visible';
-        imgDiv.style.opacity = '1';
-        noti.innerHTML = '正在读取...';
-        bindDocument();
-        return false;
-    }
-    node.appendChild(aElement);
-    insertI(node, '>');
-};
-
-//绑定大图
-var bindLarge = {
-
-    main : function(){
-        addNodeInsertedListener('div.smallcursor img, div.pic_show_box img', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.main(e.target || event.target);
-        });
-    },
-
-    media : function(){
-        addNodeInsertedListener('img.imgSmall', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.media(e.target || event.target);
-        });
-    },
-
-    enterprise : function(){
-        addNodeInsertedListener('div.smallcursor img', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.enterprise(e.target || event.target);
-        });
-    },
-
-    hot : function(){
-        addNodeInsertedListener('div.smallcursor img, div.pic_show_box img', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.hot(e.target || event.target);
-        });
-    },
-
-    search : function(){
-        addNodeInsertedListener('div.smallcursor img, div.pic_show_box img', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.search(e.target || event.target);
-        });
-    },
-
-    huati : function(){
-        addNodeInsertedListener('.media_big img.smallcursor, div.pic_show_box img', function(e) {
-            if(wlp_floatbar.on){wlp_floatbar.close();}
-            entryLarge.huati(e.target || event.target);
-        });
-    }
-};
-
-//监测到出现大图后的行为
-var entryLarge = {
-
-    main : function(that){
-
-        if(that.parentNode.className.indexOf('smallcursor') >= 0){
-            that = that.parentNode.parentNode;
-            multiPics = false;
-        }else{
-            that = that.parentNode.parentNode.parentNode.parentNode.parentNode;
-            multiPics = true;
-        }
-
-        format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');//图片格式
-        cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');//图片 CDN 地址
-        para = that.children[0].getElementsByClassName('show_big')[0].getAttribute('action-data').replace(reg11, '').split('&');
-        pid = para[0];
-        mid = para[1];
-        uid = para[2];
-
-        if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
-        }else if(that.className.indexOf('expand') === -1){
-            format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-            cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-            para = that.children[0].getElementsByClassName('show_big')[0].getAttribute('action-data').replace(reg11, '').split('&');
-            pid = para[0];
-            mid = para[1];
-            uid = para[2];
-            that.children[0].children[8].href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-            that.children[0].children[10].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-            that.children[0].children[12].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-        }
-    },
-
-    media : function(that){
-
-        that = that.parentNode.parentNode;
-        if(that.parentNode.className === 'MIB_assign'){
-            that = that.parentNode.parentNode;
-            mid = that.id.replace('disp_', '');
-            uid = that.parentNode.children[3].children[0].children[0].children[0].href.replace(reg3, '$1');
-            that = that.children[0].children[1].children[0];
-        }else if(that.className.indexOf('blogPicOri') >=0 ){
-            mid = that.id.replace('disp_', '');
-            uid = that.parentNode.children[0].getElementsByClassName('source_att')[0].children[0].href.replace(reg3, '$1');
-            var rid = that.parentNode.children[0].getElementsByClassName('source_att')[0].children[0].children[1].getAttribute('rid'); //怎么特么又跑出来个 rid
-            mid = rid;
-            that = that.children[1];
-        }
-
-        format = that.children[1].src.replace(reg7, '$1');
-        cdn = _cdn || that.children[1].src.replace(reg6, '$1');
-        pid = that.children[1].src.replace(/.*\/([\w]+)\..../, '$1');
-
-        if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, false);
-        }
-    },
-
-    enterprise : function(that){
-
-        that = that.parentNode.parentNode;
-
-        quote = (that.className === 'expand' && that.getAttribute('node-type') === 'feed_list_media_disp'); //是否为引用图
-        multiPics = false; //判断是否为多图模式，企业版不支持发布多图
-        format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-        cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-        para = that.parentNode.parentNode.querySelector('p.info').children[0].children[0].getAttribute('action-data');
-        if(!quote){
-            uid = para.replace(reg4, '$1');
-            mid = para.replace(reg5, '$1');
-        }else{
-            uid = para.replace(reg10, '$1');
-            mid = para.replace(reg12, '$1');
-        }
-        pid = para.replace(reg9, '$1');
-
-        if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
-        }
-    },
-
-    hot : function(that){
-
-        if(that.parentNode.className === 'smallcursor'){
-            that = that.parentNode.parentNode;
-            multiPics = false;
-        }else{
-            that = that.parentNode.parentNode.parentNode.parentNode.parentNode;
-            multiPics = true;
-        }
-
-        quote = (that.className === 'expand' && that.getAttribute('node-type') === 'feed_list_media_disp');
-        format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-        cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-        if(!quote && !multiPics){
-            para = that.parentNode.children[4].getElementsByClassName('WB_handle')[0].children[0].getAttribute('action-data');
-            uid = para.replace(reg4, '$1');
-            mid = para.replace(reg5, '$1');
-            pid = para.replace(reg9, '$1');
-        }else{
-            para = that.getElementsByClassName('show_big')[0].href;
-            pid = para.replace(reg1, '$1');
-            mid = para.replace(reg2, '$1');
-            uid = para.replace(reg3, '$1');
-        }
-
-        if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
-        }else{
-            format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-            cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-            para = that.getElementsByClassName('show_big')[0].href;
-            pid = para.replace(reg1, '$1');
-            mid = para.replace(reg2, '$1');
-            uid = para.replace(reg3, '$1');
-            that.children[0].children[8].href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-            that.children[0].children[10].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-            that.children[0].children[12].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-        }
-    },
-
-    search : function(that){
-
-        if(that.parentNode.className === 'smallcursor'){
-            that = that.parentNode.parentNode;
-            multiPics = false;
-        }else{
-            that = that.parentNode.parentNode.parentNode.parentNode.parentNode;
-            multiPics = true;
-        }
-
-        quote = (that.className === 'expand' && that.getAttribute('node-type') === 'feed_list_media_disp');
-        format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-        cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-        if(!quote){
-            para = that.parentNode.parentNode.getElementsByClassName('info')[0].children[0].children[2].getAttribute('action-data');
-            uid = para.replace(reg4, '$1');
-            mid = para.replace(reg5, '$1');
-        }else{
-            if(multiPics){
-                para = that.parentNode.parentNode.parentNode.getElementsByClassName('info')[1].children[0].children[2].getAttribute('action-data');
-            }else{
-                para = that.parentNode.parentNode.children[2].children[0].children[2].getAttribute('action-data');
-            }
-            uid = para.replace(reg10, '$1');
-            mid = para.replace(reg12, '$1');
-        }
-        pid = para.replace(reg9, '$1');
-
-        if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, multiPics);
-        }else{
-            format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-            cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-            para = that.getElementsByClassName('show_big')[0].href;
-            pid = para.replace(reg1, '$1');
-            mid = para.replace(reg2, '$1');
-            uid = para.replace(reg3, '$1');
-            that.children[0].children[8].href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-            that.children[0].children[10].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-            that.children[0].children[12].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-        }
-    },
-
-    huati : function(that){
-
-        that = that.parentNode.parentNode;
-        if(that.parentNode.className.indexOf('media_bigbox') >= 0 && that.getAttribute('node-type') !== 'imagesBox'){
-            that = that.parentNode.children[0];
-            para = that.parentNode.parentNode.parentNode.getElementsByClassName('con_opt')[0].children[1].children[0].children[2].getAttribute('action-data');
-            format = that.children[0].children[4].href.replace(reg7, '$1');
-            cdn = _cdn || that.children[0].children[4].href.replace(reg6, '$1');
-            pid = that.children[0].children[4].href.replace(reg8, '$1');
-            mid = para.replace(reg5, '$1');
-            uid = para.replace(reg4, '$1');
-            insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, false);
-        }else{
-            that = that.parentNode.parentNode.parentNode;
-            para = that.children[0].children[4].href;
-            format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-            cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-            pid = para.replace(reg1, '$1');
-            mid = para.replace(reg2, '$1');
-            uid = para.replace(reg3, '$1');
-
-            if(that.children[0].getElementsByClassName('wlp_el').length === 0){
-                insertEls(that.querySelector('p'), uid, mid, pid, format, cdn, true);
-            }else{
-                para = that.children[0].children[4].href;
-                format = that.getElementsByTagName('IMG')[0].src.replace(reg7, '$1');
-                cdn = _cdn || that.getElementsByTagName('IMG')[0].src.replace(reg6, '$1');
-                pid = para.replace(reg1, '$1');
-                mid = para.replace(reg2, '$1');
-                uid = para.replace(reg3, '$1');
-                that.children[0].children[12].href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-                that.children[0].children[14].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-                that.children[0].children[1].href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
-            }
-        }
-    }
-};
 
 /* -小图- */
 
@@ -1176,28 +860,28 @@ var cdnTest = function(){
 
 //判断页面类型，主入口
 if($id('pl_content_homeFeed') !== null){
-    bindLarge.main(); //本人时间线
+//本人时间线
     if(_on){bindSmall.main();}
 }else if($id('pl_content_hisFeed') !== null && !enterprise){
-    bindLarge.main(); //他人时间线
+//他人时间线
     if(_on){bindSmall.main();}
 }else if(enterprise || gov){
-    bindLarge.enterprise(); //企业版、政府版、专业版时间线
+//企业版、政府版、专业版时间线
     if(_on){bindSmall.enterprise();}
 }else if(search){
-    bindLarge.search(); //搜索页面
+//搜索页面
     if(_on){bindSmall.search();}
 }else if(hot){
-    bindLarge.hot(); //热门页面
+//热门页面
     if(_on){bindSmall.hot();}
 }else if(media){
-    bindLarge.media(); //媒体版页面
+//媒体版页面
     if(_on){bindSmall.media();}
 }else if(huati){
-    bindLarge.huati(); //话题页面
+//话题页面
     if(_on){bindSmall.huati();}
 }else if($id('plc_main') !== null){
-    bindLarge.main(); //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
+//另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
     if(_on){bindSmall.main();}
 }
 

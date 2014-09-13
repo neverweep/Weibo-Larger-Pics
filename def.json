@@ -2,7 +2,7 @@
     {
         "type": "extension",
         "frameworkVersion":"1.0.1",
-        "version":"1.2.3.5",
+        "version":"1.2.3.6",
         "guid": "{ac9ec39b-e267-4ac7-9259-c5d5fc0a06bb}",
         "name": "Weibo Larger Pics",
         "author" : {

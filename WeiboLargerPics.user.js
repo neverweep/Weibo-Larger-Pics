@@ -5,7 +5,7 @@
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.3.5
+// @version        1.2.3.6
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -19,11 +19,11 @@
 // @include        http://gov.weibo.com/*
 // @include        http://media.weibo.com/*
 // @include        http://s.weibo.com/*
+// @include        http://s.weibo.com/pic/*
 // @include        http://hot.weibo.com/*
 // @include        http://huati.weibo.com/*
 // @include        http://photo.weibo.com/*
 // @exclude        http://s.weibo.com/user/*
-// @exclude        http://s.weibo.com/pic/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
 // @updateURL      https://greasyfork.org/scripts/5038.js
@@ -110,11 +110,12 @@ var uid, pid, mid, format, para, cdn, multiPics, quote, t, ft, ht, it, imgNum = 
 var enterprise = window.location.host === 'e.weibo.com', //判断企业版、专业版、ZF 版微博
     media = window.location.host === 'media.weibo.com', //判断媒体版微博
     search = window.location.host === 's.weibo.com', //判断搜索页面
+    searchPic = window.location.host === 's.weibo.com' && window.location.href.indexOf('s.weibo.com/pic/') > 0, //判断搜索照片页面
     hot = window.location.host === 'hot.weibo.com', //判断热门页面
     huati = window.location.host === 'huati.weibo.com', //判断话题页面
     gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com
-    photo = window.location.host === 'photo.weibo.com'; //判断照片页面
-    photoTag = window.location.host === 'www.weibo.com' && window.location.href.indexOf("/album?") > 0;//判断主页照片标签
+    photo = window.location.host === 'photo.weibo.com', //判断照片页面
+    photoTag = window.location.host === 'www.weibo.com' && window.location.href.indexOf('/album?') > 0;//判断主页照片标签
 //正则表达式
 var reg1 = /.*\/pid\/(.*)\?.*/,
     reg2 = /.*\/mid\/(.*?)\/.*/,
@@ -128,10 +129,12 @@ var reg1 = /.*\/pid\/(.*)\?.*/,
     reg10 = /.*rootuid=(\d*)&?.*/,
     reg11 = /[upm]id=/g,
     reg12 = /.*rootmid=(\d*)&?.*/,
-    reg13 = /.*[(square)|(thumbnail)]\/(.*)\..../,
-    reg14 = /(thumbnail)|(square)/,
+    reg13 = /.*[(square)|(thumbnail)|(thumb\d+)]\/(.*)\..../,
+    reg14 = /(thumbnail)|(square)|(thumb\d+)/,
     reg15 = /.*scale\((.*?)\).*/,
-    reg16 = /.*rotate\((.*?)deg\).*/;
+    reg16 = /.*rotate\((.*?)deg\).*/,
+    reg17 = /.*sinaimg.cn\/(.*?)\/.*/,
+    reg18 = /.*\/(.*)/;
 //小图绑定记录
 var wlp_bind = {};
 //浮动栏对象
@@ -204,6 +207,7 @@ if(_on){
                 removeNodeInsertedListener(wlp_bind.Main);
                 removeNodeInsertedListener(wlp_bind.Hot);
                 removeNodeInsertedListener(wlp_bind.Search);
+                removeNodeInsertedListener(wlp_bind.SearchPic);
                 removeNodeInsertedListener(wlp_bind.Enterprise);
                 removeNodeInsertedListener(wlp_bind.Media);
                 removeNodeInsertedListener(wlp_bind.Huati);
@@ -259,6 +263,14 @@ if(_on){
                 that = e.target || event.target;
                 wlp_floatbar.close();
                 entrySmall.search(that);
+            });
+        },
+
+        searchPic : function(){
+            wlp_bind.SearchPic = addNodeInsertedListener('.list_picbox .img img[src*="sinaimg"]:hover', function(e){
+                that = e.target || event.target;
+                wlp_floatbar.close();
+                entrySmall.searchPic(that);
             });
         },
 
@@ -412,7 +424,7 @@ if(_on){
             format = that.src.replace(reg7, '$1');
             cdn = _cdn || that.src.replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
-            mid = that.parentNode.href.replace(/.*\/(.*)$/, '$1');
+            mid = that.parentNode.href.replace(reg18, '$1');
             uid = that.parentNode.href.replace(reg3, '$1');
             multiPics = false;
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
@@ -422,9 +434,20 @@ if(_on){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');
             cdn = _cdn || that.src.replace(reg6, '$1');
-            pid = that.parentNode.getAttribute("action-data").replace(reg9, '$1');
-            mid = that.parentNode.getAttribute("action-data").replace(reg5, '$1');
-            uid = that.parentNode.getAttribute("action-data").replace(reg4, '$1');
+            pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
+            mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+            uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
+            multiPics = false;
+            wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
+        },
+
+        searchPic : function(that){
+            wlp_floatbar.stick(that);
+            format = that.src.replace(reg7, '$1');
+            cdn = _cdn || that.src.replace(reg6, '$1');
+            pid = that.src.replace(reg13, '$1');
+            mid = that.getAttribute('mid');
+            uid = that.parentNode.parentNode.parentNode.children[1].children[0].children[0].children[0].src.replace(reg17, '$1');
             multiPics = false;
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
         },
@@ -444,11 +467,11 @@ if(_on){
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
     $id('wlp_floatbar_5').onclick = function(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"]');
-        src = $id('wlp_floatbar_3').href.replace(/.*\/(.*)/, '$1');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+        src = $id('wlp_floatbar_3').href.replace(reg18, '$1');
         for(var i in imgs){
             //获取当前图片的次序
-            if(imgs[i].src.replace(/.*\/(.*)/, '$1') === src){
+            if(imgs[i].src.replace(reg18, '$1') === src){
                 imgNum = i;
                 break;
             }
@@ -717,7 +740,7 @@ var setTrans = function(scale, rotate){
 var findParent = function(){
     var node = imgs[imgNum].parentNode;
     for(var i = 0;i <= 9;i++){
-        if(node.className.indexOf('WB_feed_datail') >= 0 || node.className.indexOf('list_feed_li') >= 0 || node.className.indexOf('MIB_linedot_l') >= 0 || node.className.indexOf('feed_list ') >= 0){
+        if(node.className.indexOf('WB_feed_datail') >= 0 || node.className.indexOf('list_feed_li') >= 0 || node.className.indexOf('MIB_linedot_l') >= 0 || node.className.indexOf('feed_list ') >= 0 || node.className.indexOf('list_picbox') >= 0 || node.className.indexOf('one_pic') >= 0 || node.className.indexOf('m_photoItem') >= 0){
             return node;
             break;
         }else{
@@ -914,6 +937,9 @@ if($id('pl_content_homeFeed') !== null){
 }else if(enterprise || gov){
 //企业版、政府版、专业版时间线
     if(_on){bindSmall.enterprise();}
+}else if(searchPic){
+//搜索页面
+    if(_on){bindSmall.searchPic();}
 }else if(search){
 //搜索页面
     if(_on){bindSmall.search();}

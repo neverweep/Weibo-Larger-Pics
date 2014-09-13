@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name           新浪微博之我要看大图 Weibo Larger Pics
-// @name:zh        Weibo Larger Pics
-// @name:en        新浪微博之我要看大图
+// @name           Weibo Larger Pics
+// @name:zh        新浪微博之我要看大图
+// @name:en        Weibo Larger Pics
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.3.3
+// @version        1.2.3.5
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -26,9 +26,8 @@
 // @exclude        http://s.weibo.com/pic/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
-// @updateURL      https://userscripts.org/scripts/source/173273.meta.js
-// @downloadURL    https://userscripts.org/scripts/source/173273.user.js
-// @updateinfo     将选项统一到一个界面；增加了设置画廊模式初始图像比例的选项；修正了图像服务器测速计时的 bug
+// @updateURL      https://greasyfork.org/scripts/5038.js
+// @downloadURL    https://greasyfork.org/scripts/5038.js
 // ==/UserScript==
 
 
@@ -115,7 +114,7 @@ var enterprise = window.location.host === 'e.weibo.com', //判断企业版、专
     huati = window.location.host === 'huati.weibo.com', //判断话题页面
     gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com
     photo = window.location.host === 'photo.weibo.com'; //判断照片页面
-    photoTag = window.location.host === 'www.weibo.com' && window.location.href.match(/www.weibo.com\/p\/\d+\/album/).length > 0; //判断主页照片标签
+    photoTag = window.location.host === 'www.weibo.com' && window.location.href.indexOf("/album?") > 0;//判断主页照片标签
 //正则表达式
 var reg1 = /.*\/pid\/(.*)\?.*/,
     reg2 = /.*\/mid\/(.*?)\/.*/,

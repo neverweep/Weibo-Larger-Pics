@@ -1,10 +1,14 @@
 // ==UserScript==
 // @name           新浪微博之我要看大图 Weibo Larger Pics
+// @name:zh        Weibo Larger Pics
+// @name:en        新浪微博之我要看大图
 // @namespace      http://xiaoxia.de/
 // @description    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.3.1
+// @version        1.2.3.3
 // @author         xiaoxia
+// @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
+// @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
 // @grant          GM_setValue
 // @grant          GM_getValue
 // @grant          GM_addStyle
@@ -17,6 +21,7 @@
 // @include        http://s.weibo.com/*
 // @include        http://hot.weibo.com/*
 // @include        http://huati.weibo.com/*
+// @include        http://photo.weibo.com/*
 // @exclude        http://s.weibo.com/user/*
 // @exclude        http://s.weibo.com/pic/*
 // @exclude        http://weibo.com/app/*
@@ -108,7 +113,9 @@ var enterprise = window.location.host === 'e.weibo.com', //判断企业版、专
     search = window.location.host === 's.weibo.com', //判断搜索页面
     hot = window.location.host === 'hot.weibo.com', //判断热门页面
     huati = window.location.host === 'huati.weibo.com', //判断话题页面
-    gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com 
+    gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com
+    photo = window.location.host === 'photo.weibo.com'; //判断照片页面
+    photoTag = window.location.host === 'www.weibo.com' && window.location.href.match(/www.weibo.com\/p\/\d+\/album/).length > 0; //判断主页照片标签
 //正则表达式
 var reg1 = /.*\/pid\/(.*)\?.*/,
     reg2 = /.*\/mid\/(.*?)\/.*/,
@@ -201,6 +208,8 @@ if(_on){
                 removeNodeInsertedListener(wlp_bind.Enterprise);
                 removeNodeInsertedListener(wlp_bind.Media);
                 removeNodeInsertedListener(wlp_bind.Huati);
+                removeNodeInsertedListener(wlp_bind.Photo);
+                removeNodeInsertedListener(wlp_bind.PhotoTag);
             }catch(err){}
             $id('wlp_floatbar_1').onclick = null;
             $id('wlp_floatbar_2').onclick = null;
@@ -260,7 +269,23 @@ if(_on){
                 wlp_floatbar.close();
                 entrySmall.huati(that);
             });
-        }
+        },
+
+        photo : function(){
+            wlp_bind.Photo = addNodeInsertedListener('.photoList img[src*="sinaimg"]:hover', function(e){
+                that = e.target || event.target;
+                wlp_floatbar.close();
+                entrySmall.photo(that);
+            });
+        },
+
+        photoTag : function(){
+            wlp_bind.PhotoTag = addNodeInsertedListener('img.photo_pic[src*="sinaimg"]:hover', function(e){
+                that = e.target || event.target;
+                wlp_floatbar.close();
+                entrySmall.photoTag(that);
+            });
+        },
     };
 
     //鼠标移动到小图后的行为
@@ -301,7 +326,7 @@ if(_on){
             }
             multiPics = false;
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
-        }, 
+        },
 
         enterprise : function(that){
             wlp_floatbar.stick(that);
@@ -381,7 +406,29 @@ if(_on){
                 multiPics = false;
             }
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
-        }
+        },
+
+        photo : function(that){
+            wlp_floatbar.stick(that);
+            format = that.src.replace(reg7, '$1');
+            cdn = _cdn || that.src.replace(reg6, '$1');
+            pid = that.src.replace(reg13, '$1');
+            mid = that.parentNode.href.replace(/.*\/(.*)$/, '$1');
+            uid = that.parentNode.href.replace(reg3, '$1');
+            multiPics = false;
+            wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
+        },
+
+        photoTag : function(that){
+            wlp_floatbar.stick(that);
+            format = that.src.replace(reg7, '$1');
+            cdn = _cdn || that.src.replace(reg6, '$1');
+            pid = that.parentNode.getAttribute("action-data").replace(reg9, '$1');
+            mid = that.parentNode.getAttribute("action-data").replace(reg5, '$1');
+            uid = that.parentNode.getAttribute("action-data").replace(reg4, '$1');
+            multiPics = false;
+            wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
+        },
     };
 
     //小图功能初始化
@@ -398,7 +445,7 @@ if(_on){
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
     $id('wlp_floatbar_5').onclick = function(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"]');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"]');
         src = $id('wlp_floatbar_3').href.replace(/.*\/(.*)/, '$1');
         for(var i in imgs){
             //获取当前图片的次序
@@ -479,7 +526,7 @@ var setTrans = function(scale, rotate){
         e.stopPropagation();
         e.preventDefault();
         return false;
-    }, false); 
+    }, false);
 
 
 //图像元素
@@ -695,7 +742,7 @@ var bindDocument = function(){
         switch(e.keyCode){//ESC 空格 右上左下 Z C X V
             case 27 : exitGallery();break;
             case 32 : calcPos(img.height, img.width, '');break;
-            case 37 : prevImg();break; 
+            case 37 : prevImg();break;
             case 38 : img.parentNode.style.top = parseInt(img.parentNode.style.top.replace('px','')) + 30 + 'px';break;
             case 39 : nextImg();break;
             case 40 : img.parentNode.style.top = parseInt(img.parentNode.style.top.replace('px','')) - 30 + 'px';break;
@@ -771,7 +818,7 @@ var cdnUI = function(){
     if(document.querySelectorAll('#wlp_cdn').length === 0){
         var div = document.createElement('div');
         div.id = 'wlp_cdn';
-        div.innerHTML = '<div><h4>新浪微博之我要看大图 - 设置</h4><br/><hr><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。超时记为 5000 毫秒。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a></p><hr><p><label><input type="checkbox" id="wlp_view"> 画廊模式优先使用自动缩放图像</label></p><p><label><input type="checkbox" id="wlp_floatbar_option"> 启用图像浮动工具栏</label></p><hr><p><a href="http://xiaoxia.de/">我的博客</a><a href="http://goo.gl/jJM0c">反馈</a><a href="http://userscripts.org/scripts/show/173273">UserScript</a><a id="wlp_cdn_exit" style="float:right" name="wlp_cdn_exit">关闭</a></p></div>';
+        div.innerHTML = '<div><h4>新浪微博之我要看大图 - 设置</h4><br/><hr><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。超时记为 5000 毫秒。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a></p><hr><p><label><input type="checkbox" id="wlp_view"> 画廊模式优先使用自动缩放图像</label></p><p><label><input type="checkbox" id="wlp_floatbar_option"> 启用图像浮动工具栏</label></p><hr><p><a href="http://xiaoxia.de/">我的博客</a><a href="http://goo.gl/jJM0c">反馈</a><a href="http://userscripts.org/scripts/show/173273">UserScript</a><a style="color:red;font-weight:bold" href="http://xiaoxia.de/upload/donation.html">捐赠</a><a id="wlp_cdn_exit" style="float:right" name="wlp_cdn_exit">关闭</a></p></div>';
         document.body.appendChild(div);
         //根据设置确定显示
         $id('wlp_cdn_option').value = _cdn;
@@ -880,6 +927,12 @@ if($id('pl_content_homeFeed') !== null){
 }else if(huati){
 //话题页面
     if(_on){bindSmall.huati();}
+}else if(photo){
+//照片页面
+    if(_on){bindSmall.photo();}
+}else if(photoTag){
+//照片标签页面
+    if(_on){bindSmall.photoTag();}
 }else if($id('plc_main') !== null){
 //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
     if(_on){bindSmall.main();}
@@ -896,7 +949,7 @@ option2.innerHTML = '<a href="javascript:;" id="wlp_cdn_btn">我要看大图设�
 var bindOption = addNodeInsertedListener('.gn_text_list li a', function(){
     document.getElementsByClassName('gn_text_list')[3].appendChild(option2);
     option2 = null;
-    
+
     $id('wlp_cdn_btn').onclick = function(){cdnUI();}
 
     removeNodeInsertedListener(bindOption);

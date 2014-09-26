@@ -216,6 +216,20 @@ addStyleCompatible('\
     background:rgba(128,128,128,0.5);\
     padding:10px;\
 }\
+#wlp_img_counter {\
+    transition: opacity .3s ease-out 0s;\
+    position: absolute;\
+    top: 2%;\
+    right: 2%;\
+    color: #FFF;\
+    text-shadow: 0, 0, 5px, #333\
+    border-radius:10px;\
+    background:rgba(80,80,80,0.5);\
+    padding:5px;\
+    z-index:9999;\
+    min-width:5em;\
+    text-align:center;\
+}\
 #wlp_img_user {\
     position: fixed;\
     right: 20px;\
@@ -263,8 +277,7 @@ var media = window.location.host === 'media.weibo.com', //判断媒体版微博
     hot = window.location.host === 'hot.weibo.com', //判断热门页面
     huati = window.location.host === 'huati.weibo.com', //判断话题页面
     gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com
-    photo = window.location.host === 'photo.weibo.com', //判断照片页面
-    photoTag = window.location.host === 'www.weibo.com' && window.location.href.indexOf('/album?') > 0;//判断主页照片标签
+    photo = window.location.host === 'photo.weibo.com'; //判断照片页面
 //正则表达式
 var reg1 = /.*\/pid\/(.*)\?.*/,
     reg2 = /.*\/mid\/(.*?)\/.*/,
@@ -615,12 +628,15 @@ if(_on){
                 break;
             }
         }
+        gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
+        gallery.counter_total.innerHTML = imgs.length;
         gallery._mode ? src = $id('wlp_floatbar_3').href : src = $id('wlp_floatbar_3').href.replace('large', 'bmiddle');  //根据浏览模式决定大图小图
         gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.');  //根据 CDN 设置地址
         gallery.source.href = src.replace('bmiddle', 'large');
         imgReady(src, function(){gallery.img.style.visibility = 'visible';gallery.img.style.opacity = '0.5';gallery.calcPos(this.height, this.width, src)});
         gallery.imgDiv.style.visibility = 'visible'; //显示图像层
         gallery.imgDiv.style.opacity = '1';
+        gallery.noti.style.visibility = 'visible';
         gallery.noti.innerHTML = '正在读取';
         //开始监听键盘事件
         document.onkeydown = function(e){
@@ -679,18 +695,22 @@ var gallery = {
     _mode : null,
     _view : __view,
     _cdn : __cdn,
+    counter_now : null,
+    counter_total: null,
 
     init : function(){
         //建立图像层
         gallery.imgDiv = document.createElement('div');
         gallery.imgDiv.id = 'wlp_img_wrap';
-        gallery.imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="http://xiaoxia.de/upload/donation.html">捐赠</a><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">设置</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张(←)</a><a id="wlp_img_left" title="向左旋转图片 90°">向左转(Z)</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right" title="向右旋转图片 90°">向右转(C)</a><a id="wlp_img_next" title="浏览下一张图片">下一张(→)</a><span id="wlp_img_pullright"><a id="wlp_img_source" href="javascript:;" target="_blank" title="查看源图（永远是大图），在此右键可另存大图">源图(B)</a><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看微博 (V)</a><a href="javascript:;" id="wlp_img_exit" title="退出画廊模式" >退出(ESC)</a></span></div><div id="wlp_img_noti"></div></div>';
+        gallery.imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="http://xiaoxia.de/upload/donation.html">捐赠</a><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">设置</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张(←)</a><a id="wlp_img_left" title="向左旋转图片 90°">向左转(Z)</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right" title="向右旋转图片 90°">向右转(C)</a><a id="wlp_img_next" title="浏览下一张图片">下一张(→)</a><span id="wlp_img_pullright"><a id="wlp_img_source" href="javascript:;" target="_blank" title="查看源图（永远是大图），在此右键可另存大图">源图(B)</a><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看微博 (V)</a><a href="javascript:;" id="wlp_img_exit" title="退出画廊模式" >退出(ESC)</a></span></div><div id="wlp_img_noti"></div><div id="wlp_img_counter"><span id="wlp_img_counter_now"></span> / <span id="wlp_img_counter_total"></span></div></div>';
         document.body.appendChild(gallery.imgDiv);
 
         gallery.ratio = $id('wlp_img_ratio');
         gallery.noti = $id('wlp_img_noti');
         gallery.mode = $id('wlp_img_mode');
         gallery.source = $id('wlp_img_source');
+        gallery.counter_now = $id('wlp_img_counter_now');
+        gallery.counter_total = $id('wlp_img_counter_total');
         gallery._mode = _mode;
         gallery._mode ? gallery.mode.innerHTML = '大图(X)' : gallery.mode.innerHTML = '中图(X)';//初始化时根据设置显示文字
 
@@ -722,24 +742,22 @@ var gallery = {
         gallery.img.onmouseover = function(){
             gallery.dragF.drag('wlp_img_drag');
             $id('wlp_img_controler').style.opacity = '.1';
+            $id('wlp_img_counter').style.opacity = '.4';
         }
         gallery.img.onmouseout = function(){
             $id('wlp_img_controler').style.opacity = '.4';
+            $id('wlp_img_counter').style.opacity = '1';
         }
         //图片读取完成后才显示
         gallery.img.onload = function(){
             clearTimeout(it);
             this.style.opacity = '1';
-            gallery.noti.style.visible = 'hidden';
+            gallery.noti.style.visibility = 'hidden';
         }
         gallery.img.compelte = function(){
             clearTimeout(it);
             this.style.opacity = '1';
-            gallery.noti.style.visible = 'hidden';
-        }
-        //图片读取错误
-        gallery.img.onerror = function(){
-            gallery.noti.innerHTML = '读取失败';
+            gallery.noti.style.visibility = 'hidden';
         }
         //双击图像退出
         gallery.img.ondblclick = function(){gallery.control.exitGallery()};
@@ -837,25 +855,25 @@ var gallery = {
         //切换模式
         changeMode : function(){
             clearTimeout(it); //清除之前的定时
-            gallery.cancel();
-            gallery.noti.style.visible = 'visible';
+            gallery.noti.style.visibility = 'visible';
             gallery._view = __view;
             gallery.img.style.opacity = '0';
             it = setTimeout(function(){
                 gallery.img.style.visibility = 'hidden'; //设置为隐藏，这样下方的控制栏就不会受未加载图像的影响而改变透明度。
                 gallery.img.src = '';
+                gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
+                gallery._mode = gallery._mode === true ? false : true;
+                if(gallery._mode){
+                    gallery.mode.innerHTML = '大图(X)';
+                    src = imgs[imgNum].src.replace(reg14, 'large');
+                }else{
+                    gallery.mode.innerHTML = '中图(X)';
+                    src = imgs[imgNum].src.replace(reg14, 'bmiddle');
+                }
+                imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
+                save('mode', gallery._mode);
             }, 200);
-            gallery._mode = gallery._mode === true ? false : true;
-            if(gallery._mode){
-                gallery.mode.innerHTML = '大图(X)';
-                src = imgs[imgNum].src.replace(reg14, 'large');
-            }else{
-                gallery.mode.innerHTML = '中图(X)';
-                src = imgs[imgNum].src.replace(reg14, 'bmiddle');
-            }
-            imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
-            save('mode', gallery._mode);
         },
         //旋转图像
         rotateRight : function(){
@@ -877,7 +895,6 @@ var gallery = {
         //退出画廊
         exitGallery : function(){
             clearTimeout(it);
-            gallery.cancel();
             it = setTimeout(function(){
                 gallery.imgDiv.style.visibility = 'hidden';
                 //置入一个 1X1 的 png 清空之前的图像
@@ -890,40 +907,74 @@ var gallery = {
         //下一张
         nextImg : function(){
             clearTimeout(it);
-            gallery.cancel();
-            gallery.noti.style.visible = 'visible';
+            gallery.noti.style.visibility = 'visible';
             gallery._view = __view; //将浏览比例标志重置
             gallery.img.style.opacity = '0'; //先把图像透明，读取后再显示
+            imgNum++;
+            if(imgNum > imgs.length - 1 || imgNum < 0){
+                imgNum = 0;//置零
+            }
+            //自动载入后面的图像
+            if(imgNum == imgs.length - 4){
+                try{
+                    removeNodeInsertedListener(wlp_bind.Main_insert);
+                }catch(err){}
+                var currentPos = document.body.scrollTop;
+                window.scrollTo(0,document.body.scrollHeight);
+                wlp_bind.Main_insert = addNodeInsertedListener('div.WB_feed_datail, div.list_pic', function(){
+                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+                    gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
+                    gallery.counter_total.innerHTML = imgs.length;
+                });
+                setTimeout(function(){window.scrollTo(0,currentPos)}, 500);
+            }
+            gallery.counter_now.innerHTML = imgNum + 1;
             it = setTimeout(function(){
                 gallery.img.style.visibility = 'hidden'; //设置为隐藏，这样下方的控制栏就不会受未加载图像的影响而改变透明度。
                 gallery.img.src = '';
+                gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
+                gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
+                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery.source.href = src.replace('bmiddle', 'large');
+                imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);
-            imgNum++;
-            if(imgNum > imgs.length - 1|| imgNum < 0){imgNum = 0;}
-            gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-            gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
-            gallery.source.href = src.replace('bmiddle', 'large');
-            imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
         },
         //上一张
         prevImg : function(){
             clearTimeout(it);
-            gallery.cancel();
             gallery._view = __view;
-            gallery.noti.style.visible = 'visible';
-            gallery.img.style.opacity = '00';
+            gallery.noti.style.visibility = 'visible';
+            gallery.img.style.opacity = '0';
+            imgNum--;
+            if(imgNum > imgs.length - 1 || imgNum < 0){
+                imgNum = imgs.length - 1;
+            }
+            //自动载入后面的图像
+            if(imgNum == imgs.length - 1){
+                try{
+                    removeNodeInsertedListener(wlp_bind.Main_insert);
+                }catch(err){}
+                var currentPos = document.body.scrollTop;
+                window.scrollTo(0,document.body.scrollHeight);
+                wlp_bind.Main_insert = addNodeInsertedListener('div.WB_feed_datail, div.list_pic', function(){
+                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+                    gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
+                    gallery.counter_total.innerHTML = imgs.length;
+                });
+                setTimeout(function(){window.scrollTo(0,currentPos)}, 500);
+            }
+            gallery.counter_now.innerHTML = imgNum + 1;
             it = setTimeout(function(){
                 gallery.img.style.visibility = 'hidden'; //设置为隐藏，这样下方的控制栏就不会受未加载图像的影响而改变透明度。
                 gallery.img.src = '';
+                gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
+                gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
+                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery.source.href = src.replace('bmiddle', 'large');
+                imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);
-            imgNum--;
-            if(imgNum > imgs.length - 1 || imgNum < 0){imgNum = imgs.length - 1;}
-            gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-            gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
-            gallery.source.href = src.replace('bmiddle', 'large');
-            imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
         },
     },
 
@@ -1009,14 +1060,6 @@ var gallery = {
             };
         }
     },
-    
-    cancel : function(){
-        if(window.stop !== undefined){
-            window.stop();
-        }else if(document.execCommand !== undefined){
-            document.execCommand("Stop", false);
-        }
-}
 }
 
 /* -测速- */
@@ -1135,13 +1178,7 @@ var CDN = {
 /* -初始化- */
 if(_on){
     //判断页面类型，主入口
-    if($id('pl_content_homeFeed') !== null){
-    //本人时间线
-        bindSmall.main();
-    }else if($id('pl_content_hisFeed') !== null){
-    //他人时间线
-        bindSmall.main();
-    }else if(searchPic){
+    if(searchPic){
     //搜索页面
         bindSmall.searchPic();
     }else if(search){
@@ -1159,13 +1196,8 @@ if(_on){
     }else if(photo){
     //照片页面
         bindSmall.photo();
-    }else if(photoTag){
-    //照片标签页面
-        bindSmall.main();
-    }else if($id('plc_main') !== null){
-    //另外一种媒体版页面，域名不带 media，结构和普通版基本一样，如北京青年报
-        bindSmall.main();
     }
+    bindSmall.main();
     bindSmall.photoTag();
 
     //初始化画廊

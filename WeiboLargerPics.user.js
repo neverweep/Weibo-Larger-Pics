@@ -7,7 +7,7 @@
 // @description:en    A userscript for weibo.com to view large pictures easily and quickly.
 // @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.3.10
+// @version        1.2.4.1
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -23,6 +23,7 @@
 // @include        http://hot.weibo.com/*
 // @include        http://huati.weibo.com/*
 // @include        http://photo.weibo.com/*
+// @include        http://d.weibo.com/*
 // @exclude        http://s.weibo.com/user/*
 // @exclude        http://weibo.com/app/*
 // @exclude        http://weibo.com/app
@@ -280,6 +281,7 @@ var media = window.location.host === 'media.weibo.com', //判断媒体版微博
     huati = window.location.host === 'huati.weibo.com', //判断话题页面
     gov = window.location.host === 'gov.weibo.com'; //判断 ZF 页面，但是似乎所有 ZF 版都是用 e.weibo.com
     photo = window.location.host === 'photo.weibo.com'; //判断照片页面
+    d = window.location.host === 'd.weibo.com'; //判断发现页面
 //正则表达式
 var reg1 = /.*\/pid\/(.*)\?.*/,
     reg2 = /.*\/mid\/(.*?)\/.*/,
@@ -408,7 +410,7 @@ if(_on){
     var bindSmall = {
 
         main : function(){
-            wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
+            wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover, li.bigcursor img[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
                 entrySmall.main(that);
@@ -479,7 +481,7 @@ if(_on){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');//图片格式
             cdn = gallery._cdn || that.src.replace(reg6, '$1');//图片 CDN 地址
-            if(that.parentNode.className.indexOf('bigcursor') >= 0){
+            if(that.parentNode.className.indexOf('bigcursor') >= 0 && that.parentNode.parentNode.parentNode.getAttribute('node-type') != "fl_pic_list"){
                 para = that.parentNode.getAttribute('action-data').replace(reg11, '').split('&');
                 pid = para[2];
                 mid = para[1];
@@ -589,9 +591,13 @@ if(_on){
             format = that.src.replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
-            mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+            if(that.parentNode.parentNode.parentNode.children.length < 2){
+				mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+				multiPics = false;
+			}else{
+				multiPics = true;
+			}
             uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
-            multiPics = false;
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
         },
 
@@ -621,7 +627,7 @@ if(_on){
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
     function initGallery(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
         src = $id('wlp_floatbar_3').href.replace(reg18, '$1');
         for(var i in imgs){
             //获取当前图片的次序
@@ -924,7 +930,7 @@ var gallery = {
                 var currentPos = document.body.scrollTop;
                 window.scrollTo(0,document.body.scrollHeight);
                 wlp_bind.Main_insert = addNodeInsertedListener('div.WB_feed_datail, div.list_pic', function(){
-                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
                     gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
                     gallery.counter_total.innerHTML = imgs.length;
                 });
@@ -960,7 +966,7 @@ var gallery = {
                 var currentPos = document.body.scrollTop;
                 window.scrollTo(0,document.body.scrollHeight);
                 wlp_bind.Main_insert = addNodeInsertedListener('div.WB_feed_datail, div.list_pic', function(){
-                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"]');
+                    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
                     gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
                     gallery.counter_total.innerHTML = imgs.length;
                 });
@@ -1067,25 +1073,6 @@ var gallery = {
 /* -测速- */
 //建立选项界面
 var CDN = {
-    init : function(){
-        //建立选项元素
-        //CDN
-        var option2 = document.createElement('li');
-        option2.title = '新浪微博之我要看大图设置';
-        option2.innerHTML = '<a href="javascript:;" id="wlp_cdn_btn">我要看大图设置</a>';
-
-
-        //设置菜单 dom 建立时将选项添加到设置菜单
-        var bindOption = addNodeInsertedListener('.gn_text_list li a', function(){
-            document.getElementsByClassName('gn_text_list')[3].appendChild(option2);
-            option2 = null;
-
-            $id('wlp_cdn_btn').onclick = function(){CDN.cdnUI();}
-
-            removeNodeInsertedListener(bindOption);
-        });
-    },
-
     cdnUI : function(){
         if(document.querySelectorAll('#wlp_cdn').length === 0){
             var div = document.createElement('div');
@@ -1198,6 +1185,9 @@ if(_on){
     }else if(photo){
     //照片页面
         bindSmall.photo();
+    }else if(photo){
+    //照片页面
+        bindSmall.photo();
     }
     bindSmall.main();
     bindSmall.photoTag();
@@ -1205,6 +1195,4 @@ if(_on){
     //初始化画廊
     gallery.init();
 }
-
-CDN.init();
 })();

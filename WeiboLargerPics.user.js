@@ -7,7 +7,11 @@
 // @description:en    A userscript for weibo.com to view large pictures easily and quickly.
 // @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
+<<<<<<< HEAD
 // @version        1.2.4.1
+=======
+// @version        1.2.4.0
+>>>>>>> origin/master
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -1195,4 +1199,10 @@ if(_on){
     //初始化画廊
     gallery.init();
 }
+<<<<<<< HEAD
 })();
+=======
+
+CDN.init();
+})();
+>>>>>>> origin/master

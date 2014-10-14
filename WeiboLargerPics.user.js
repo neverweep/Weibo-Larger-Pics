@@ -1196,6 +1196,3 @@ if(_on){
     gallery.init();
 }
 })();
-
-CDN.init();
-})();

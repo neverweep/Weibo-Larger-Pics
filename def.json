@@ -2,12 +2,12 @@
     {
         "type": "extension",
         "frameworkVersion":"1.0.1",
-        "version":"1.2.4.2",
+        "version":"1.2.4.3",
         "guid": "{ac9ec39b-e267-4ac7-9259-c5d5fc0a06bb}",
         "name": "Weibo Larger Pics",
         "author" : {
             'name' : '小虾',
-            'email' : 'i@xiaoxia.de'
+            'email' : 'xiaoxiamx@gmail.com'
         },
         "title": {
             "zh-cn": "新浪微博之我要看大图"

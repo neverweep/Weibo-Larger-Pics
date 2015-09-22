@@ -2,12 +2,12 @@
 // @name           Weibo Larger Pics
 // @name:zh        新浪微博之我要看大图
 // @name:en        Weibo Larger Pics
-// @namespace      http://xiaoxia.de/
+// @namespace      http://xia.im/
 // @description    A userscript for weibo.com to view large pictures easily and quickly.
 // @description:en    A userscript for weibo.com to view large pictures easily and quickly.
 // @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.4.2
+// @version        1.2.4.3
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -272,7 +272,7 @@ addStyleCompatible('\
 ');
 
 //基本变量
-var uid, pid, mid, format, para, cdn, multiPics, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent;
+var uid, pid, mid, format, para, cdn, multiPics, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent, settingAdded = false;
 //版面判断。公益版使用 iframe，无法支持。
 var media = window.location.host === 'media.weibo.com', //判断媒体版微博
     search = window.location.host === 's.weibo.com', //判断搜索页面
@@ -592,11 +592,11 @@ if(_on){
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
             if(that.parentNode.parentNode.parentNode.children.length < 2){
-				mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
-				multiPics = false;
-			}else{
-				multiPics = true;
-			}
+                mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+                multiPics = false;
+            }else{
+                multiPics = true;
+            }
             uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
         },
@@ -1191,6 +1191,17 @@ if(_on){
     }
     bindSmall.main();
     bindSmall.photoTag();
+
+    wlp_bind.Setting = addNodeInsertedListener('.gn_topmenulist:hover', function(e){
+        if(!settingAdded){
+            settingAdded = true;
+            that = e.target || event.target;
+            var li = document.createElement('li');
+            li.onclick = function(){CDN.cdnUI()};
+            li.innerHTML = '<a href="#" id="wlp_setting_btn">我要看大图</a>'
+            that.children[0].insertBefore(li, that.children[0].childNodes[9]);
+        }
+    });
 
     //初始化画廊
     gallery.init();

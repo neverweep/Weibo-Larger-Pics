@@ -5,9 +5,9 @@
 // @namespace      http://xia.im/
 // @description    A userscript for weibo.com to view large pictures easily and quickly.
 // @description:en    A userscript for weibo.com to view large pictures easily and quickly.
-// @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。
+// @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面和原始地址。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.2.4.3
+// @version        1.2.5.0
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -258,7 +258,8 @@ addStyleCompatible('\
     line-height: 1.9;\
     z-index: 9998;\
     opacity: 0;\
-    transition: opacity 0.1s ease-out 0s\
+    transition: opacity 0.1s ease-out 0s;\
+    border-radius:3px\
 }\
 #wlp_floatbar:hover {\
     border-color: #2AC\
@@ -337,7 +338,7 @@ if(_on){
             clearTimeout(ht);
             var left = node.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
             var top = node.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
-            this.el.style.left = left + 'px';
+            this.el.style.left = (left + 5) + 'px';
             this.el.style.top = top + 'px';
             this.el.style.opacity = '1';
             this.el.style.visibility = 'visible';
@@ -357,12 +358,6 @@ if(_on){
         //工具条设置属性
         property : function(uid, mid, pid, format, cdn, multiPics){
             $id('wlp_floatbar_1').href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-            if(multiPics){
-                $id('wlp_floatbar_2').style.display = 'none';
-            }else{
-                $id('wlp_floatbar_2').style.display = 'block';
-                $id('wlp_floatbar_2').href = 'http://photo.weibo.com/' + uid + '/talbum/detail/photo_id/' + mid;
-            }
             $id('wlp_floatbar_3').href = 'http://ww' + cdn + '.sinaimg.cn/large/' + pid + format;
             //开始监听键盘事件
             document.onkeyup = function(e){
@@ -375,7 +370,6 @@ if(_on){
                 }
                 switch(e.keyCode){//ESC 空格 右上左下 Z C X V B
                     case 65 : window.open($id('wlp_floatbar_1').href, '_blank ' + Math.random());break;
-                    case 83 : if(!multiPics) window.open($id('wlp_floatbar_2').href, '_blank ' + Math.random());break;
                     case 68 : window.open($id('wlp_floatbar_3').href, '_blank ' + Math.random());break;
                     case 70 : initGallery();;break;
                 }
@@ -398,7 +392,6 @@ if(_on){
                 removeNodeInsertedListener(wlp_bind.PhotoTag);
             }catch(err){}
             $id('wlp_floatbar_1').onclick = null;
-            $id('wlp_floatbar_2').onclick = null;
             $id('wlp_floatbar_3').onclick = null;
             $id('wlp_floatbar_4').onclick = null;
             $id('wlp_floatbar_5').onclick = null;
@@ -410,6 +403,7 @@ if(_on){
     var bindSmall = {
 
         main : function(){
+            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative}');//::after 的 position 影响了 img 的 hover，hack 掉它。
             wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover, li.bigcursor img[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
@@ -481,17 +475,17 @@ if(_on){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');//图片格式
             cdn = gallery._cdn || that.src.replace(reg6, '$1');//图片 CDN 地址
-            if(that.parentNode.className.indexOf('bigcursor') >= 0 && that.parentNode.parentNode.parentNode.getAttribute('node-type') != "fl_pic_list"){
-                para = that.parentNode.getAttribute('action-data').replace(reg11, '').split('&');
-                pid = para[2];
-                mid = para[1];
-                uid = para[0];
+            if(that.parentNode.parentNode.getAttribute('action-data')== null){
+                para = that.parentNode.getAttribute('action-data');
+                pid = para.replace(/p(ic_)?id=(.*?)&.*/g, '$2');
+                mid = para.replace(reg5, '$1');
+                uid = para.replace(reg4, '$1');
                 multiPics = false;
             }else{
-                pid = that.getAttribute('action-data').replace('pic_id=', '');
-                that = that.parentNode.parentNode.parentNode;
-                mid = that.getAttribute('action-data').replace(reg5, '$1');
-                uid = that.getAttribute('action-data').replace(reg4, '$1');
+                para = that.parentNode.parentNode.getAttribute('action-data');
+                pid = that.src.replace(reg13, '$1');
+                mid = para.replace(reg5, '$1');
+                uid = para.replace(reg4, '$1');
                 multiPics = true;
             }
             wlp_floatbar.property(uid, mid, pid, format, cdn, multiPics);
@@ -617,12 +611,11 @@ if(_on){
     //创建工具条
     var div = document.createElement('div');
     div.id = 'wlp_floatbar';
-    div.innerHTML = '<a href="#" target="_blank" id="wlp_floatbar_1" title="快捷键(A) 进入相册大图页面">图</a><a href="#" target="_blank" id="wlp_floatbar_2" title="快捷键(S) 进入相册详情页面，这里可以看到图片的全部评论">详</a><a href="#" target="_blank" id="wlp_floatbar_3" title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;" id="wlp_floatbar_5" title="快捷键(F) 使用画廊模式浏览本页大图">览</a><a href="javascript:;" id="wlp_floatbar_4" title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
+    div.innerHTML = '<a href="#" target="_blank" id="wlp_floatbar_1" title="快捷键(A) 进入相册大图页面">图</a><a href="#" target="_blank" id="wlp_floatbar_3" title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;" id="wlp_floatbar_5" title="快捷键(F) 使用画廊模式浏览本页大图">览</a><a href="javascript:;" id="wlp_floatbar_4" title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
     document.body.appendChild(div);
 
     //为工具条按钮创建事件
     $id('wlp_floatbar_1').onclick = function(){wlp_floatbar.close();}
-    $id('wlp_floatbar_2').onclick = function(){wlp_floatbar.close();}
     $id('wlp_floatbar_3').onclick = function(){wlp_floatbar.close();}
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
     function initGallery(){

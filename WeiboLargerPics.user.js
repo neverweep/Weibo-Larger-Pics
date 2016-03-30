@@ -74,13 +74,13 @@ if(typeof(GM_getValue) !== 'undefined'){
 }else if(typeof(window.external.mxGetRuntime) !== 'undefined'){
     //Maxthon 插件版使用原生接口储存
     var pb = window.external.mxGetRuntime();
-    _on = window.pb.storage.getConfig('floatbar');
+    _on = pb.storage.getConfig('floatbar');
     _on = (_on === '' || _on === 'true');
-    _mode = window.pb.storage.getConfig('mode');
+    _mode = pb.storage.getConfig('mode');
     _mode = (_mode === '' || _mode === 'true');
-    __view = window.pb.storage.getConfig('view');
+    __view = pb.storage.getConfig('view');
     __view = (__view === '' || __view === 'true');
-    __cdn = window.pb.storage.getConfig('cdn');
+    __cdn = pb.storage.getConfig('cdn');
     __cdn = (_cdn === '' || _cdn === '0') ? 0 : parseInt(_cdn);
     _type = 3;
 }else{
@@ -108,7 +108,7 @@ var save = function(name, value){
             break;
         case 2 : localStorage[name] = value;
             break;
-        case 3 : window.pb.storage.setConfig(name, value);
+        case 3 : pb.storage.setConfig(name, value);
             break;
     }
 }

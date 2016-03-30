@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name           Weibo Larger Pics
+// @name           Weibo Larger Pics 新浪微博之我要看大图
 // @name:zh        新浪微博之我要看大图
 // @name:en        Weibo Larger Pics
 // @namespace      http://xia.im/
-// @description    A userscript for weibo.com to view large pictures easily and quickly.
-// @description:en    A userscript for weibo.com to view large pictures easily and quickly.
-// @description:zh    新浪微博看图增强脚本：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面和原始地址。
+// @description    View large pictures on weibo.com easily and quickly. 新浪微博看图增强脚本，查看原始大图更快更方便。
+// @description:en    View large pictures on weibo.com easily and quickly.
+// @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
 // @version        1.2.5.1
 // @author         xiaoxia

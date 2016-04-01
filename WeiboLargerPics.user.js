@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.0.0
+// @version        1.3.1.0
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -270,10 +270,52 @@ addStyleCompatible('\
 .wlp_floatbar_hide {\
     display: none !important\
 }\
+/* 收集面板*/\
+#wlp_cp {\
+    position:fixed;\
+    bottom:0;\
+    width:99%;\
+    display:none;\
+}\
+#wlp_cp_wrap {\
+    width:450px;\
+    margin:0 auto;\
+    padding:0 10px;\
+    background:#FFF;\
+    border:2px solid #2af;\
+    border-bottom:none;\
+}\
+#wlp_co_title {\
+    margin: 15px 0;\
+    font-size:14px;\
+    text-align:center;\
+}\
+#wlp_cp_urllist {\
+    height:70px;\
+    width:100%;\
+    overflow-x:hidden;\
+    overflow-y:scroll\
+}\
+#wlp_cp_btn a {\
+    color: #333;\
+    padding: 5px 10px;\
+    border: 1px solid #CCC;\
+    background: #FFF;\
+    margin: 10px;\
+    display: inline-block;\
+    line-height: 1\
+}\
+#wlp_cp_btn a:hover {\
+    text-decoration: none;\
+    border: 1px solid #2AC;\
+    background: #2AC;\
+    color: #FFF;\
+    cursor: pointer\
+}\
 ');
 
 //基本变量
-var uid, pid, mid, format, para, cdn, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent;
+var uid, pid, mid, format, para, cdn, quote, t, ft, ht, it, imgNum = 0, imgs = [], parent, cp = [];
 //版面判断。公益版使用 iframe，无法支持。
 var search = window.location.host === 's.weibo.com', //判断搜索页面
     searchPic = window.location.host === 's.weibo.com' && window.location.href.indexOf('s.weibo.com/pic/') > 0, //判断搜索照片页面
@@ -328,7 +370,7 @@ if(_on){
             clearTimeout(t);
             clearTimeout(ft);
             clearTimeout(ht);
-            var left = node.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
+            var left = node.getBoundingClientRect().left;
             var top = node.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
             this.el.style.left = (left + 5) + 'px';
             this.el.style.top = top + 'px';
@@ -354,7 +396,7 @@ if(_on){
             //开始监听键盘事件
             document.onkeyup = function(e){
                 e = e || window.event;
-                if('65 68 70'.indexOf(e.keyCode.toString()) >= 0){
+                if('65 83 68 70'.indexOf(e.keyCode.toString()) >= 0){
                     e.cancelBubble = true;
                     e.stopPropagation();
                     e.preventDefault();
@@ -362,6 +404,7 @@ if(_on){
                 }
                 switch(e.keyCode){//ESC 空格 右上左下 Z C X V B
                     case 65 : window.open($id('wlp_floatbar_1').href, '_blank ' + Math.random());break;
+                    case 83 : wlp_floatbar.add();break;
                     case 68 : window.open($id('wlp_floatbar_3').href, '_blank ' + Math.random());break;
                     case 70 : initGallery();;break;
                 }
@@ -381,11 +424,25 @@ if(_on){
                 removeNodeInsertedListener(wlp_bind.photoFluid);
             }catch(err){}
             $id('wlp_floatbar_1').onclick = null;
+            $id('wlp_floatbar_2').onclick = null;
             $id('wlp_floatbar_3').onclick = null;
             $id('wlp_floatbar_4').onclick = null;
             $id('wlp_floatbar_5').onclick = null;
             delete wlp_bind; //清除所有小图的监视并释放
-        }
+        },
+
+        //加入收集面板
+        add : function(){
+            $id('wlp_cp').style.display = "block";
+            if(cp.indexOf($id('wlp_floatbar_3').href) < 0){
+                cp.push($id('wlp_floatbar_3').href);
+            };
+            var cp_text = "";
+            for(var i in cp){
+                cp_text = cp_text + cp[i] + "\r\n";
+            }
+            $id('wlp_cp_urllist').innerHTML = cp_text;
+        },
     };
 
     //绑定小图
@@ -515,15 +572,32 @@ if(_on){
 
     //小图功能初始化
     //创建工具条
-    var div = document.createElement('div');
-    div.id = 'wlp_floatbar';
-    div.innerHTML = '<a href="javascript:;" target="_blank" id="wlp_floatbar_1" title="快捷键(A) 进入相册大图页面">图</a><a href="javascript:;" target="_blank" id="wlp_floatbar_3" title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;" id="wlp_floatbar_5" title="快捷键(F) 使用画廊模式浏览本页大图">览</a><a href="javascript:;" id="wlp_floatbar_4" title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
-    document.body.appendChild(div);
+    var ftDiv = document.createElement('div');
+    ftDiv.id = 'wlp_floatbar';
+    ftDiv.innerHTML = '<a href="javascript:;"target="_blank"id="wlp_floatbar_1"title="快捷键(A) 进入相册大图页面">图</a><a href="javascript:;"id="wlp_floatbar_2"title="快捷键(S) 加入该图地址到收集面板">集</a><a href="javascript:;"target="_blank"id="wlp_floatbar_3"title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;"id="wlp_floatbar_5"title="快捷键(F) 使用画廊模式浏览本页大图">览</a><a href="javascript:;"id="wlp_floatbar_4"title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
+    document.body.appendChild(ftDiv);
 
     //为工具条按钮创建事件
     $id('wlp_floatbar_1').onclick = function(){wlp_floatbar.close();}
+    $id('wlp_floatbar_2').onclick = function(){wlp_floatbar.add();}
     $id('wlp_floatbar_3').onclick = function(){wlp_floatbar.close();}
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
+
+
+    //创建收集面板
+    var cpDiv = document.createElement('div');
+    cpDiv.id = 'wlp_cp';
+    cpDiv.innerHTML = '<div id="wlp_cp_wrap"><div id="wlp_co_title">我要看大图地址收集面板</div><textarea id="wlp_cp_urllist" readonly></textarea><div id="wlp_cp_btn"><a href="javascript:;" id="wlp_cp_clear">清空</a><a href="javascript:;" id="wlp_cp_close">关闭</a></div><div>点击地址收集文本框，按下 Ctrl+A 再按 Ctrl+C 即可将地址复制到剪贴板。</div><div>刷新页面或进入新页面将会清空收集！</div></div>';
+    document.body.appendChild(cpDiv);
+    
+    $id('wlp_cp_close').onclick = function(){$id('wlp_cp').style.display = "none";}
+    $id('wlp_cp_clear').onclick = function(){
+        $id('wlp_cp').style.display = "none";
+        $id('wlp_cp_urllist').innerText = "";
+        cp = [];
+    }
+
+
     function initGallery(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
         imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');

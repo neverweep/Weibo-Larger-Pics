@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "新浪微博之我要看大图",
   "description": "新浪微博看图增强：画廊模式：轻松查看本页所有大图；缩略图增加浮动工具栏：快速进入大图页面、图片详情页面和原始地址。",
-  "version": "1.2.5.1",
+  "version": "1.3.1.0",
   "minimum_chrome_version": "21",
   "icons": {
     "128": "icons/icon_128.png",
@@ -14,7 +14,7 @@
   "content_scripts": [ {
      "exclude_globs": [ "http://s.weibo.com/user/*", "http://weibo.com/app/*", "http://weibo.com/app" ],
      "exclude_matches": [  ],
-     "include_globs": [ "http://t.sina.com.cn/*", "http://weibo.com/*", "http://www.weibo.com/*", "http://media.weibo.com/*", "http://s.weibo.com/*", "http://hot.weibo.com/*", "http://huati.weibo.com/*", "http://s.weibo.com/pic/*"],
+     "include_globs": [ "http://t.sina.com.cn/*", "http://weibo.com/*", "http://www.weibo.com/*", "http://s.weibo.com/*", "http://s.weibo.com/pic/*", "http://d.weibo.com/*", "http://photo.weibo.com/*"],
      "js": [ "WeiboLargerPics.user.js" ],
      "matches": [ "http://*.weibo.com/*", "http://t.sina.com.cn/*" ],
      "run_at": "document_end"

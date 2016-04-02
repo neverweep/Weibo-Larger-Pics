@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.1.0
+// @version        1.3.1.1
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -123,8 +123,8 @@ addStyleCompatible('\
 #wlp_cdn>div {\
     width: 600px;\
     background: #FFF;\
-    border: 1px solid #CCC;\
-    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.85);\
+    border: 2px solid #2AD;\
+    border-radius: 5px;\
     padding: 20px;\
     margin: 0 auto\
 }\
@@ -246,7 +246,7 @@ addStyleCompatible('\
 /* 浮动栏*/\
 #wlp_floatbar {\
     background: #FFF;\
-    border: 1px solid #CCC;\
+    border: 2px solid #CCC;\
     width: 28px;\
     overflow: hidden;\
     position: absolute;\
@@ -256,7 +256,10 @@ addStyleCompatible('\
     z-index: 9998;\
     opacity: 0;\
     transition: opacity 0.1s ease-out 0s;\
-    border-radius:3px\
+    border-radius:5px;\
+    border-top-right-radius: 0;\
+    border-bottom-right-radius: 0;\
+    border-right:0;\
 }\
 #wlp_floatbar:hover {\
     border-color: #2AC\
@@ -283,14 +286,14 @@ addStyleCompatible('\
     padding:0 10px;\
     background:#FFF;\
     border:2px solid #2af;\
+    border-radius:5px;\
+    border-bottom-left-radius:0;\
+    border-bottom-right-radius:0;\
     border-bottom:none;\
-}\
-#wlp_co_title {\
-    margin: 15px 0;\
-    font-size:14px;\
-    text-align:center;\
+    z-index:9999;\
 }\
 #wlp_cp_urllist {\
+    margin:10px 0 0 0;\
     height:70px;\
     width:100%;\
     overflow-x:hidden;\
@@ -301,7 +304,7 @@ addStyleCompatible('\
     padding: 5px 10px;\
     border: 1px solid #CCC;\
     background: #FFF;\
-    margin: 10px;\
+    margin: 10px 0;\
     display: inline-block;\
     line-height: 1\
 }\
@@ -370,8 +373,8 @@ if(_on){
             clearTimeout(t);
             clearTimeout(ft);
             clearTimeout(ht);
-            var left = node.getBoundingClientRect().left;
-            var top = node.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
+            var left = node.parentNode.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
+            var top = node.parentNode.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
             this.el.style.left = (left + 5) + 'px';
             this.el.style.top = top + 'px';
             this.el.style.opacity = '1';
@@ -587,7 +590,7 @@ if(_on){
     //创建收集面板
     var cpDiv = document.createElement('div');
     cpDiv.id = 'wlp_cp';
-    cpDiv.innerHTML = '<div id="wlp_cp_wrap"><div id="wlp_co_title">我要看大图地址收集面板</div><textarea id="wlp_cp_urllist" readonly></textarea><div id="wlp_cp_btn"><a href="javascript:;" id="wlp_cp_clear">清空</a><a href="javascript:;" id="wlp_cp_close">关闭</a></div><div>点击地址收集文本框，按下 Ctrl+A 再按 Ctrl+C 即可将地址复制到剪贴板。</div><div>刷新页面或进入新页面将会清空收集！</div></div>';
+    cpDiv.innerHTML = '<div id="wlp_cp_wrap"><textarea id="wlp_cp_urllist" readonly></textarea><div id="wlp_cp_btn"><div style="float:left"><a href="javascript:;" id="wlp_cp_clear" style="margin-right:10px">清空</a><a href="javascript:;" id="wlp_cp_close">关闭</a></div><div style="float:right"><a href="javascript:;" id="wlp_cp_cdn">设置</a></div><div style="clear:both"></div></div><div>点击地址收集文本框，按下 Ctrl+A 再按 Ctrl+C 即可将地址复制到剪贴板。</div><div>刷新页面或进入新页面将会清空收集！</div></div>';
     document.body.appendChild(cpDiv);
     
     $id('wlp_cp_close').onclick = function(){$id('wlp_cp').style.display = "none";}
@@ -596,6 +599,7 @@ if(_on){
         $id('wlp_cp_urllist').innerText = "";
         cp = [];
     }
+    $id('wlp_cp_cdn').onclick = function(){CDN.cdnUI();}
 
 
     function initGallery(){
@@ -686,7 +690,7 @@ var gallery = {
         //建立图像层
         gallery.imgDiv = document.createElement('div');
         gallery.imgDiv.id = 'wlp_img_wrap';
-        gallery.imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="http://xia.im/upload/donation.html">捐赠</a><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">设置</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张(←)</a><a id="wlp_img_left" title="向左旋转图片 90°">向左转(Z)</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right" title="向右旋转图片 90°">向右转(C)</a><a id="wlp_img_next" title="浏览下一张图片">下一张(→)</a><span id="wlp_img_pullright"><a id="wlp_img_source" href="javascript:;" target="_blank" title="查看源图（永远是大图），在此右键可另存大图">源图(B)</a><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看微博 (V)</a><a href="javascript:;" id="wlp_img_exit" title="退出画廊模式" >退出(ESC)</a></span></div><div id="wlp_img_noti"></div><div id="wlp_img_counter"><span id="wlp_img_counter_now"></span> / <span id="wlp_img_counter_total"></span></div></div>';
+        gallery.imgDiv.innerHTML = '<div id="wlp_img_container"><div id="wlp_img_drag"><img id="wlp_img"/></div></div><div id="wlp_img_controler"><span id="wlp_img_pullleft"><a href="javascript:;" id="wlp_img_help">帮助</a><a href="javascript:;" id="wlp_img_cdn">设置</a></span><a id="wlp_img_prev" title="浏览上一张图片">上一张(←)</a><a id="wlp_img_left" title="向左旋转图片 90°">向左转(Z)</a><a id="wlp_img_ratio" title="重置图像缩放比例和旋转">1</a><a id="wlp_img_mode" title="浏览模式，大图或中图"></a><a id="wlp_img_ori" title="原始比例">1:1</a><a id="wlp_img_right" title="向右旋转图片 90°">向右转(C)</a><a id="wlp_img_next" title="浏览下一张图片">下一张(→)</a><span id="wlp_img_pullright"><a id="wlp_img_source" href="javascript:;" target="_blank" title="查看源图（永远是大图），在此右键可另存大图">源图(B)</a><a href="javascript:;" id="wlp_img_scroll" title="退出画廊模式，并将页面定位到该微博">查看微博 (V)</a><a href="javascript:;" id="wlp_img_exit" title="退出画廊模式" >退出(ESC)</a></span></div><div id="wlp_img_noti"></div><div id="wlp_img_counter"><span id="wlp_img_counter_now"></span> / <span id="wlp_img_counter_total"></span></div></div>';
         document.body.appendChild(gallery.imgDiv);
 
         gallery.ratio = $id('wlp_img_ratio');
@@ -1151,15 +1155,19 @@ if(_on){
         bindSmall.photo();
     }else if(discover){
         bindSmall.discover();
-    }else if(photoFluid){
-        bindSmall.photoFluid();
     }
+    bindSmall.photoFluid();
     bindSmall.main();
 
-    var li = document.createElement('li');
-    li.onclick = function(){CDN.cdnUI()};
-    li.innerHTML = '<a href="javascript:;" id="wlp_setting_btn">我要看大图</a>'
-    document.querySelector(".gn_topmenulist_set").children[0].insertBefore(li, document.querySelector(".gn_topmenulist_set").children[0].childNodes[9]);
+
+    addNodeInsertedListener('.ficon_set:hover', function(e){
+        if(!document.querySelector("#wlp_setting_btn")){
+            var li = document.createElement('li');
+            li.onclick = function(){CDN.cdnUI()};
+            li.innerHTML = '<a href="javascript:;" id="wlp_setting_btn">我要看大图</a>'
+            document.querySelector(".gn_topmenulist_set").children[0].insertBefore(li, document.querySelector(".gn_topmenulist_set").children[0].childNodes[9]);
+        }
+    });
 
     //初始化画廊
     gallery.init();

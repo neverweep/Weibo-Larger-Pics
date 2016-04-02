@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.1.1
+// @version        1.3.1.2
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -338,7 +338,8 @@ var reg3 = /.*weibo.com\/(.*?)\/.*/,
     reg15 = /.*scale\((.*?)\).*/,
     reg16 = /.*rotate\((.*?)deg\).*/,
     reg17 = /.*sinaimg.cn\/(.*?)\/.*/,
-    reg18 = /.*\/(.*)/;
+    reg18 = /.*\/(.*)/,
+    reg19 = /\?tags=.*/;
 //小图绑定记录
 var wlp_bind = {};
 //浮动栏对象
@@ -373,8 +374,14 @@ if(_on){
             clearTimeout(t);
             clearTimeout(ft);
             clearTimeout(ht);
-            var left = node.parentNode.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
-            var top = node.parentNode.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
+            var nodePositioning;
+            if(node.parentNode.tagName === "LI"){
+                nodePositioning = node.parentNode;
+            }else{
+                nodePositioning = node;
+            }
+            var left = nodePositioning.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
+            var top = nodePositioning.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
             this.el.style.left = (left + 5) + 'px';
             this.el.style.top = top + 'px';
             this.el.style.opacity = '1';
@@ -545,7 +552,7 @@ if(_on){
             format = that.src.replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
-            mid = that.parentNode.href.replace(reg18, '$1');
+            mid = that.parentNode.href.replace(reg18, '$1').replace(reg19, '');
             uid = that.parentNode.href.replace(reg3, '$1');
             wlp_floatbar.property(uid, mid, pid, format, cdn);
         },
@@ -605,10 +612,10 @@ if(_on){
     function initGallery(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
         imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
-        src = $id('wlp_floatbar_3').href.replace(reg18, '$1');
+        src = $id('wlp_floatbar_3').href.replace(reg18, '$1').replace(reg19, '');;
         for(var i in imgs){
             //获取当前图片的次序
-            if(imgs[i].src.replace(reg18, '$1') === src){
+            if(imgs[i].src.replace(reg18, '$1').replace(reg19, '') === src){
                 imgNum = i;
                 break;
             }
@@ -619,7 +626,7 @@ if(_on){
         gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
         gallery.counter_total.innerHTML = imgs.length;
         gallery._mode ? src = $id('wlp_floatbar_3').href : src = $id('wlp_floatbar_3').href.replace('large', 'bmiddle');  //根据浏览模式决定大图小图
-        gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.');  //根据 CDN 设置地址
+        gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.');  //根据 CDN 设置地址
         gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
         imgReady(src, function(){gallery.img.style.visibility = 'visible';gallery.img.style.opacity = '0.5';gallery.calcPos(this.height, this.width, src)});
         gallery.imgDiv.style.visibility = 'visible'; //显示图像层
@@ -923,7 +930,7 @@ var gallery = {
                 gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
                 gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
                 gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
                 imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);
@@ -959,7 +966,7 @@ var gallery = {
                 gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
                 gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
                 gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
                 imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);

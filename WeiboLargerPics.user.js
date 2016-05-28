@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.1.2
+// @version        1.3.1.3
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -459,7 +459,7 @@ if(_on){
     var bindSmall = {
 
         main : function(){
-            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative}');//::after 的 position 影响了 img 的 hover，hack 掉它。
+            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative !important}');//::after 的 position 影响了 img 的 hover，hack 掉它。
             wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover, li.bigcursor img[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
@@ -499,8 +499,16 @@ if(_on){
             });
         },
 
+        photoFluidNew : function(){
+            wlp_bind.photoFluid = addNodeInsertedListener('img.photo_pict[src*="sinaimg"]:hover', function(e){
+                that = e.target || event.target;
+                wlp_floatbar.close();
+                entrySmall.photoFluidNew(that);
+            });
+        },
+
         discover : function(){
-            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative}');//::after 的 position 影响了 img 的 hover，hack 掉它。
+            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative !important}');//::after 的 position 影响了 img 的 hover，hack 掉它。
             wlp_bind.Hot = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
@@ -562,11 +570,22 @@ if(_on){
             format = that.src.replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
-            if(that.parentNode.parentNode.parentNode.children.length < 2){
-                mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
-            }
             uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
             wlp_floatbar.property(uid, mid, pid, format, cdn);
+        },
+
+        photoFluidNew : function(that){
+            if(that.parentNode.href.indexOf("video.weibo.com") < 0){
+                wlp_floatbar.stick(that);
+                format = that.src.replace(reg7, '$1');
+                cdn = gallery._cdn || that.src.replace(reg6, '$1');
+                pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
+                if(that.parentNode.parentNode.parentNode.children.length < 2){
+                    mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+                }
+                uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
+                wlp_floatbar.property(uid, mid, pid, format, cdn);
+            }
         },
 
         searchPic : function(that){
@@ -611,7 +630,7 @@ if(_on){
 
     function initGallery(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"], img.photo_pict[src*="sinaimg"]');
         src = $id('wlp_floatbar_3').href.replace(reg18, '$1').replace(reg19, '');;
         for(var i in imgs){
             //获取当前图片的次序
@@ -1164,6 +1183,7 @@ if(_on){
         bindSmall.discover();
     }
     bindSmall.photoFluid();
+    bindSmall.photoFluidNew();
     bindSmall.main();
 
 

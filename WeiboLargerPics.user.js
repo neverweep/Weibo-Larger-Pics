@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.1.3
+// @version        1.3.1.4
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -523,7 +523,7 @@ if(_on){
         main : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');//图片格式
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');//图片 CDN 地址
+            cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');//图片 CDN 地址
             if(that.parentNode.parentNode.getAttribute('action-data')== null){
                 para = that.parentNode.getAttribute('action-data');
                 pid = para.replace(/p(ic_)?id=(.*?)&.*/g, '$2');
@@ -541,7 +541,7 @@ if(_on){
         search : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');
+            cdn = gallery._cdn ||that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
             if(that.getAttribute('action-type').indexOf('feed_list_media_img') >= 0){
                 para = that.getAttribute('action-data').replace(reg11, '').split('&');
@@ -557,7 +557,7 @@ if(_on){
 
         photo : function(that){
             wlp_floatbar.stick(that);
-            format = that.src.replace(reg7, '$1');
+            format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
             mid = that.parentNode.href.replace(reg18, '$1').replace(reg19, '');
@@ -567,7 +567,7 @@ if(_on){
 
         photoFluid : function(that){
             wlp_floatbar.stick(that);
-            format = that.src.replace(reg7, '$1');
+            format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
             uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
@@ -577,7 +577,7 @@ if(_on){
         photoFluidNew : function(that){
             if(that.parentNode.href.indexOf("video.weibo.com") < 0){
                 wlp_floatbar.stick(that);
-                format = that.src.replace(reg7, '$1');
+                format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
                 cdn = gallery._cdn || that.src.replace(reg6, '$1');
                 pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
                 if(that.parentNode.parentNode.parentNode.children.length < 2){
@@ -590,7 +590,7 @@ if(_on){
 
         searchPic : function(that){
             wlp_floatbar.stick(that);
-            format = that.src.replace(reg7, '$1');
+            format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
             mid = that.getAttribute('mid');

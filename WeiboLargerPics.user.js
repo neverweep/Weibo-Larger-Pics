@@ -328,7 +328,8 @@ var reg3 = /.*weibo.com\/(.*?)\/.*/,
     reg15 = /.*scale\((.*?)\).*/,
     reg16 = /.*rotate\((.*?)deg\).*/,
     reg17 = /.*sinaimg.cn\/(.*?)\/.*/,
-    reg18 = /.*\/(.*)/;
+    reg18 = /.*\/(.*)/,
+    reg19 = /\?tags=.*/;
 //小图绑定记录
 var wlp_bind = {};
 //浮动栏对象
@@ -363,8 +364,14 @@ if(_on){
             clearTimeout(t);
             clearTimeout(ft);
             clearTimeout(ht);
-            var left = node.parentNode.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
-            var top = node.parentNode.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
+            var nodePositioning;
+            if(node.parentNode.tagName === "LI"){
+                nodePositioning = node.parentNode;
+            }else{
+                nodePositioning = node;
+            }
+            var left = nodePositioning.getBoundingClientRect().left + (document.body.scrollLeft || document.documentElement.scrollLeft) - 39;
+            var top = nodePositioning.getBoundingClientRect().top + (document.body.scrollTop || document.documentElement.scrollTop);
             this.el.style.left = (left + 5) + 'px';
             this.el.style.top = top + 'px';
             this.el.style.opacity = '1';
@@ -444,7 +451,7 @@ if(_on){
     var bindSmall = {
 
         main : function(){
-            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative}');//::after 的 position 影响了 img 的 hover，hack 掉它。
+            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative !important}');//::after 的 position 影响了 img 的 hover，hack 掉它。
             wlp_bind.Main = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover, li.bigcursor img[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
@@ -484,8 +491,16 @@ if(_on){
             });
         },
 
+        photoFluidNew : function(){
+            wlp_bind.photoFluid = addNodeInsertedListener('img.photo_pict[src*="sinaimg"]:hover', function(e){
+                that = e.target || event.target;
+                wlp_floatbar.close();
+                entrySmall.photoFluidNew(that);
+            });
+        },
+
         discover : function(){
-            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative}');//::after 的 position 影响了 img 的 hover，hack 掉它。
+            addStyleCompatible('.WB_feed_v3 .WB_media_a li:after{position:relative !important}');//::after 的 position 影响了 img 的 hover，hack 掉它。
             wlp_bind.Hot = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
@@ -500,7 +515,7 @@ if(_on){
         main : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');//图片格式
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');//图片 CDN 地址
+            cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');//图片 CDN 地址
             if(that.parentNode.parentNode.getAttribute('action-data')== null){
                 para = that.parentNode.getAttribute('action-data');
                 pid = para.replace(/p(ic_)?id=(.*?)&.*/g, '$2');
@@ -518,7 +533,7 @@ if(_on){
         search : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');
+            cdn = gallery._cdn ||that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
             if(that.getAttribute('action-type').indexOf('feed_list_media_img') >= 0){
                 para = that.getAttribute('action-data').replace(reg11, '').split('&');
@@ -535,9 +550,9 @@ if(_on){
         photo : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');
+            cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
-            mid = that.parentNode.href.replace(reg18, '$1');
+            mid = that.parentNode.href.replace(reg18, '$1').replace(reg19, '');
             uid = that.parentNode.href.replace(reg3, '$1');
             wlp_floatbar.property(uid, mid, pid, format, cdn);
         },
@@ -545,18 +560,29 @@ if(_on){
         photoFluid : function(that){
             wlp_floatbar.stick(that);
             format = that.src.replace(reg7, '$1');
-            cdn = gallery._cdn || that.src.replace(reg6, '$1');
+            cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
-            if(that.parentNode.parentNode.parentNode.children.length < 2){
-                mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
-            }
             uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
             wlp_floatbar.property(uid, mid, pid, format, cdn);
         },
 
+        photoFluidNew : function(that){
+            if(that.parentNode.href.indexOf("video.weibo.com") < 0){
+                wlp_floatbar.stick(that);
+                format = that.src.replace(reg7, '$1');
+                cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
+                pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
+                if(that.parentNode.parentNode.parentNode.children.length < 2){
+                    mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
+                }
+                uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
+                wlp_floatbar.property(uid, mid, pid, format, cdn);
+            }
+        },
+
         searchPic : function(that){
             wlp_floatbar.stick(that);
-            format = that.src.replace(reg7, '$1');
+            format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
             cdn = gallery._cdn || that.src.replace(reg6, '$1');
             pid = that.src.replace(reg13, '$1');
             mid = that.getAttribute('mid');
@@ -598,11 +624,11 @@ if(_on){
 
     function initGallery(){
         if(wlp_floatbar.on){wlp_floatbar.close();}
-        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"]');
-        src = $id('wlp_floatbar_3').href.replace(reg18, '$1');
+        imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"], img.photo_pict[src*="sinaimg"]');
+        src = $id('wlp_floatbar_3').href.replace(reg18, '$1').replace(reg19, '');;
         for(var i in imgs){
             //获取当前图片的次序
-            if(imgs[i].src.replace(reg18, '$1') === src){
+            if(imgs[i].src.replace(reg18, '$1').replace(reg19, '') === src){
                 imgNum = i;
                 break;
             }
@@ -613,7 +639,7 @@ if(_on){
         gallery.counter_now.innerHTML = parseInt(imgNum) + 1;
         gallery.counter_total.innerHTML = imgs.length;
         gallery._mode ? src = $id('wlp_floatbar_3').href : src = $id('wlp_floatbar_3').href.replace('large', 'bmiddle');  //根据浏览模式决定大图小图
-        gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.');  //根据 CDN 设置地址
+        gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.');  //根据 CDN 设置地址
         gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
         imgReady(src, function(){gallery.img.style.visibility = 'visible';gallery.img.style.opacity = '0.5';gallery.calcPos(this.height, this.width, src)});
         gallery.imgDiv.style.visibility = 'visible'; //显示图像层
@@ -911,7 +937,7 @@ var gallery = {
                 gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
                 gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
                 gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
                 imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);
@@ -947,7 +973,7 @@ var gallery = {
                 gallery.noti.visibility = "visible";
                 gallery.noti.innerHTML = '正在读取';
                 gallery._mode ? src = imgs[imgNum].src.replace(reg14, 'large') : src = imgs[imgNum].src.replace(reg14, 'bmiddle'); //根据浏览模式决定大图小图
-                gallery._cdn === 0 ? true : src = src.replace(/ww\d\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
+                gallery._cdn === 0 ? true : src = src.replace(/w(w|t)?\d?\./, 'ww' + gallery._cdn + '.'); //根据 CDN 设置地址
                 gallery.source.href = src.replace(/(bmiddle)|(orj480)/, 'large');
                 imgReady(src, function(){gallery.img.style.visibility = "visible";gallery.img.style.opacity = "0.5";gallery.calcPos(this.height, this.width, src)});
             }, 200);
@@ -1147,6 +1173,7 @@ if(_on){
         bindSmall.discover();
     }
     bindSmall.photoFluid();
+    bindSmall.photoFluidNew();
     bindSmall.main();
 
 

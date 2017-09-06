@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.1.1
+// @version        1.3.2.0
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -48,6 +48,9 @@ function addStyleCompatible(a){var b,d,c;'undefined'!=typeof GM_addStyle?'undefi
  */
 var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++)e[t].end?e.splice(t--,1):e[t]();!e.length&&r()},r=function(){clearInterval(t),t=null};return function(r,i,s,o){var u,a,f,l,c,h=new Image;h.src=r;if(h.complete){i.call(h),s&&s.call(h);return}a=h.width,f=h.height,h.onerror=function(){o&&o.call(h),u.end=!0,h=h.onload=h.onerror=null},u=function(){l=h.width,c=h.height;if(l!==a||c!==f||l*c>1024)i.call(h),u.end=!0},u(),h.onload=function(){!u.end&&u(),s&&s.call(h),h=h.onload=h.onerror=null},u.end||(e.push(u),t===null&&(t=setInterval(n,40)))}}();
 
+//62进制转10进制
+function string62to10(number_code) {var chars = '0123456789abcdefghigklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ',radix = chars.length,number_code = String(number_code),len = number_code.length,i = 0,origin_number = 0;while (i < len) {origin_number += Math.pow(radix, i++) * chars.indexOf(number_code.charAt(len - i) || 0);}return origin_number;};
+	
 /* -全局- */
 
 //判断浏览器以确定读取和储存方法
@@ -68,18 +71,6 @@ if(typeof(GM_getValue) !== 'undefined'){
     __view = localStorage['view'] === 'true' || typeof(localStorage['view']) === 'undefined';
     __cdn = typeof(localStorage['cdn']) === 'undefined' ?  0 : parseInt(localStorage['cdn']);
     _type = 2;
-}else if(typeof(window.external.mxGetRuntime) !== 'undefined'){
-    //Maxthon 插件版使用原生接口储存
-    var pb = window.external.mxGetRuntime();
-    _on = pb.storage.getConfig('floatbar');
-    _on = (_on === '' || _on === 'true');
-    _mode = pb.storage.getConfig('mode');
-    _mode = (_mode === '' || _mode === 'true');
-    __view = pb.storage.getConfig('view');
-    __view = (__view === '' || __view === 'true');
-    __cdn = pb.storage.getConfig('cdn');
-    __cdn = (_cdn === '' || _cdn === '0') ? 0 : parseInt(_cdn);
-    _type = 3;
 }else{
     //以上都不支持的浏览器常开
     _on = true;
@@ -104,8 +95,6 @@ var save = function(name, value){
         case 1 : GM_setValue(name, value);
             break;
         case 2 : localStorage[name] = value;
-            break;
-        case 3 : pb.storage.setConfig(name, value);
             break;
     }
 }
@@ -147,7 +136,7 @@ addStyleCompatible('\
     height: 100%;\
     left: 0;\
     top: 0;\
-    z-index: 9999;\
+    z-index: 10001;\
     background: rgba(0,0,0,.95);\
     opacity: 0;\
     visibility: hidden;\
@@ -155,6 +144,7 @@ addStyleCompatible('\
 }\
 #wlp_img_drag {\
     position: absolute;\
+	transition: all 0.15s ease;\
     z-index: 100;\
 }\
 #wlp_img {\
@@ -277,7 +267,7 @@ addStyleCompatible('\
 #wlp_cp {\
     position:fixed;\
     bottom:0;\
-    width:99%;\
+	width: 450px; z-index: 1; left: calc(50% - 255px);\
     display:none;\
 }\
 #wlp_cp_wrap {\
@@ -324,12 +314,12 @@ var search = window.location.host === 's.weibo.com', //判断搜索页面
     searchPic = window.location.host === 's.weibo.com' && window.location.href.indexOf('s.weibo.com/pic/') > 0, //判断搜索照片页面
     photo = window.location.host === 'photo.weibo.com'; //判断照片页面
     discover = window.location.host === 'd.weibo.com'; //判断发现页面
-    photoFluid = !!window.location.href.match(/weibo\.com\/p\/\d+\/album/);
+    photoFluid = !!window.location.href.match(/weibo\.com\/p\/\d+/);
 //正则表达式
 var reg3 = /.*weibo.com\/(.*?)\/.*/,
     reg4 = /.*uid=(\d*)&?.*/,
     reg5 = /.*mid=(\d*)&?.*/,
-    reg6 = /^.*?\/\/ww?(t|\d).*/,
+    reg6 = /^.*?\/\/w[wxt](t|\d).*/,
     reg7 = /.*(\.(jpg|gif)).*?$/,
     reg9 = /.*pid=(\w*)&?.*/,
     reg11 = /[upm]id=/g,
@@ -396,20 +386,22 @@ if(_on){
         property : function(uid, mid, pid, format, cdn){
             $id('wlp_floatbar_1').href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
             $id('wlp_floatbar_3').href = 'http://ww' + (cdn != "t" ? cdn : "1") + '.sinaimg.cn/large/' + pid + format;
+            $id('wlp_floatbar_6').href = 'http://weibo.com/' + originUid($id('wlp_floatbar_3').href);
             //开始监听键盘事件
             document.onkeyup = function(e){
                 e = e || window.event;
-                if('65 83 68 70'.indexOf(e.keyCode.toString()) >= 0){
+                if('65 83 68 87'.indexOf(e.keyCode.toString()) >= 0){
                     e.cancelBubble = true;
                     e.stopPropagation();
                     e.preventDefault();
                     e.returnValue = false;
                 }
-                switch(e.keyCode){//ESC 空格 右上左下 Z C X V B
+                switch(e.keyCode){//A S D W Q
                     case 65 : window.open($id('wlp_floatbar_1').href, '_blank ' + Math.random());break;
                     case 83 : wlp_floatbar.add();break;
                     case 68 : window.open($id('wlp_floatbar_3').href, '_blank ' + Math.random());break;
-                    case 70 : initGallery();;break;
+                    case 87 : initGallery();;break;
+                    case 81 : window.open($id('wlp_floatbar_6').href, '_blank ' + Math.random());break;
                 }
             }
         },
@@ -485,7 +477,7 @@ if(_on){
         },
 
         photoFluid : function(){
-            wlp_bind.photoFluid = addNodeInsertedListener('img.photo_pic[src*="sinaimg"]:hover', function(e){
+            wlp_bind.photoFluid = addNodeInsertedListener('img.photo_pic[src*="sinaimg"]:hover, img.photo_pict[src*="sinaimg"]:hover', function(e){
                 that = e.target || event.target;
                 wlp_floatbar.close();
                 entrySmall.photoFluid(that);
@@ -577,13 +569,15 @@ if(_on){
     //创建工具条
     var ftDiv = document.createElement('div');
     ftDiv.id = 'wlp_floatbar';
-    ftDiv.innerHTML = '<a href="javascript:;"target="_blank"id="wlp_floatbar_1"title="快捷键(A) 进入相册大图页面">图</a><a href="javascript:;"id="wlp_floatbar_2"title="快捷键(S) 加入该图地址到收集面板">集</a><a href="javascript:;"target="_blank"id="wlp_floatbar_3"title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;"id="wlp_floatbar_5"title="快捷键(F) 使用画廊模式浏览本页大图">览</a><a href="javascript:;"id="wlp_floatbar_4"title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
+    ftDiv.innerHTML = '<a href="javascript:;"target="_blank"id="wlp_floatbar_1"title="快捷键(A) 进入相册大图页面">图</a><a href="javascript:;"id="wlp_floatbar_2"title="快捷键(S) 加入该图地址到收集面板">集</a><a href="javascript:;"target="_blank"id="wlp_floatbar_3"title="快捷键(D) 大图原始地址，在此点右键可以另存图像或者复制地址转发给别人">源</a><a href="javascript:;"id="wlp_floatbar_5"title="快捷键(W) 使用画廊模式浏览本页大图">览</a><a href="javascript:;"target="_blank"id="wlp_floatbar_6"title="访问图像原始上传者微博">访</a><a href="javascript:;"id="wlp_floatbar_4"title="临时关闭我要看大图工具条，刷新页面后失效\n你可以在上方的工具栏设置菜单内永久关闭浮动工具条">X</a>';
     document.body.appendChild(ftDiv);
 
     //为工具条按钮创建事件
     $id('wlp_floatbar_1').onclick = function(){wlp_floatbar.close();}
     $id('wlp_floatbar_2').onclick = function(){wlp_floatbar.add();}
     $id('wlp_floatbar_3').onclick = function(){wlp_floatbar.close();}
+    $id('wlp_floatbar_6').onclick = function(){wlp_floatbar.close();}
+    $id('wlp_floatbar_5').onclick = function(){wlp_floatbar.close();}
     $id('wlp_floatbar_4').onclick = function(){wlp_floatbar.remove();}
 
 
@@ -636,9 +630,9 @@ if(_on){
                 e.preventDefault();
                 e.returnValue = false;
             }
-            switch(e.keyCode){//ESC 空格 右上左下 Z C X V B
+            switch(e.keyCode){//ESC S 右上左下 Z C X V B
                 case 27 : gallery.control.exitGallery();break;
-                case 32 : gallery.calcPos(gallery.img.height, gallery.img.width, '');break;
+                case 83 : gallery.calcPos(gallery.img.height, gallery.img.width, '');break;
                 case 37 : gallery.control.prevImg();break;
                 case 38 : gallery.img.parentNode.style.top = parseInt(gallery.img.parentNode.style.top.replace('px','')) + 30 + 'px';break;
                 case 39 : gallery.control.nextImg();break;
@@ -801,7 +795,7 @@ var gallery = {
         }
         //帮助按钮
         $id('wlp_img_help').onclick = function(){
-            alert('鼠标操作：\n\n缩放图片：在图片上滚动鼠标滚轮可以放大缩小图像。\n拖动图片：在图片上按住鼠标左键可以自由拖动图片。\n滚动图片：在空白区域滚动滚轮可以滚动图片。\n\n退出画廊模式：双击图片\n\n\n\n键盘操作：\n\n左右方向：切换图片。\n上下方向：滚动图片。\nZ、C：旋转图像。\nX：切换图像模式。\nV：定位到该微博。\n空格：1:1 与初始状态切换。\nB：新窗口查看大图\n\nESC：退出画廊模式。')
+            alert('鼠标操作：\n\n缩放图片：在图片上滚动鼠标滚轮可以放大缩小图像。\n拖动图片：在图片上按住鼠标左键可以自由拖动图片。\n滚动图片：在空白区域滚动滚轮可以滚动图片。\n\n退出画廊模式：双击图片\n\n\n\n键盘操作：\n\n左右方向：切换图片。\n上下方向：滚动图片。\nZ、C：旋转图像。\nX：切换图像模式。\nV：定位到该微博。\nS：1:1 与初始状态切换。\nB：新窗口查看大图\n\nESC：退出画廊模式。')
         }
         //缩放 1：1 按钮
         $id('wlp_img_ori').onclick = function(){
@@ -867,17 +861,11 @@ var gallery = {
         rotateRight : function(){
             var trans = gallery.trans.getTrans();
             trans[1] = trans[1] + 90;
-            if(trans[1] >= 360 || trans[1] <= -360){
-                trans[1] = 0;
-            }
             gallery.trans.setTrans(trans[0], trans[1]);
         },
         rotateLeft : function(){
             var trans = gallery.trans.getTrans();
             trans[1] = trans[1] - 90
-            if(trans[1] >= 360 || trans[1] <= -360){
-                trans[1] = 0;
-            }
             gallery.trans.setTrans(trans[0], trans[1]);
         },
         //退出画廊
@@ -1057,7 +1045,7 @@ var CDN = {
         if(document.querySelectorAll('#wlp_cdn').length === 0){
             var div = document.createElement('div');
             div.id = 'wlp_cdn';
-            div.innerHTML = '<div><h4>新浪微博之我要看大图 - 设置</h4><br/><hr><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。超时记为 5000 毫秒。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a></p><hr><p><label><input type="checkbox" id="wlp_view"> 画廊模式优先使用自动缩放图像</label></p><p><label><input type="checkbox" id="wlp_floatbar_option"> 启用图像浮动工具栏</label></p><hr><p><a href="http://xia.im/">我的博客</a><a href="http://xia.im/weibo-larger-pics-userscript/">反馈</a><a href="https://greasyfork.org/scripts/5038-weibo-larger-pics">GreasyFork</a><a href="https://github.com/neverweep/Weibo-Larger-Pics/">Github</a><a style="color:red;font-weight:bold" href="http://xia.im/upload/donation.html">捐赠</a><a id="wlp_cdn_exit" style="float:right" name="wlp_cdn_exit">关闭</a></p></div>';
+            div.innerHTML = '<html><head></head><body><div><h4>新浪微博之我要看大图 - 设置</h4><br /><hr /><p>在这里可以强制指定新浪图片服务器的地址（只对画廊模式和图片源按钮有效）。通常情况新浪的图片服务器（ww*.sinaimg.cn）会根据你的地址和网络分配最合适的服务器和 CDN，但是有时新浪分配的服务器和 CDN 速度很慢，这时可以强制指定一个速度更快的服务器为你服务。</p><p>一般情况下建议使用“新浪分配”，仅在某些图片无法加载或加载很慢时才特别指定服务器，并选择“在此页面临时使用”。</p><p>以下数值单位为毫秒，最后一列为同一图片的三次测速平均值。超时记为 5000 毫秒。</p><p>1：<span id="wlp_cdn_1">-</span><span id="wlp_cdn_5">-</span><span id="wlp_cdn_9">-</span><span id="wlp_cdn_13">-</span></p><p>2：<span id="wlp_cdn_2">-</span><span id="wlp_cdn_6">-</span><span id="wlp_cdn_10">-</span><span id="wlp_cdn_14">-</span></p><p>3：<span id="wlp_cdn_3">-</span><span id="wlp_cdn_7">-</span><span id="wlp_cdn_11">-</span><span id="wlp_cdn_15">-</span></p><p>4：<span id="wlp_cdn_4">-</span><span id="wlp_cdn_8">-</span><span id="wlp_cdn_12">-</span><span id="wlp_cdn_16">-</span></p><p>服务器：<select name="wlp_cdn_option" id="wlp_cdn_option"><option value="0">新浪分配</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select><a id="wlp_cdn_test" name="wlp_cdn_test">测速</a><a id="wlp_cdn_temp" name="wlp_cdn_temp">在此页面临时使用</a><a id="wlp_cdn_save" name="wlp_cdn_save">一直使用</a></p><hr /><p><label><input type="checkbox" id="wlp_view" /> 画廊模式优先使用自动缩放图像</label></p><p><label><input type="checkbox" id="wlp_floatbar_option" /> 启用图像浮动工具栏</label></p><hr /><p>根据微博图像名反查上传者微博，填入格式为abcdefg0123456789.jpg</p><p><label>输入文件名 <input type="text" id="wlp_inputImgName"/> <a id="wlp_visit" target="_blank">访问</a></label></p><hr /><p><a href="http://xia.im/">我的博客</a><a href="http://xia.im/weibo-larger-pics-userscript/">反馈</a><a href="https://greasyfork.org/scripts/5038-weibo-larger-pics">GreasyFork</a><a href="https://github.com/neverweep/Weibo-Larger-Pics/">Github</a><a style="color:red;font-weight:bold" href="http://xia.im/upload/donation.html">捐赠</a><a id="wlp_cdn_exit" style="float:right" name="wlp_cdn_exit">关闭</a></p></div></body></html>';
             document.body.appendChild(div);
             //根据设置确定显示
             $id('wlp_cdn_option').value = gallery._cdn;
@@ -1090,6 +1078,8 @@ var CDN = {
                     confirm('重新开启浮动栏需要刷新页面。\n\n点击“确定”立即刷新页面；\n点击“取消”那就待会儿再说~') === true ? window.location.reload() : true;
                 }
             }
+			//反查微博
+			$id('wlp_visit').onclick = function(){this.href = originUid($id('wlp_inputImgName').value);}
             //退出
             $id('wlp_cdn_exit').onclick = function(){$id('wlp_cdn').style.display = 'none';}
         }else{
@@ -1172,4 +1162,15 @@ if(_on){
     //初始化画廊
     gallery.init();
 }
+
+function originUid(url){
+	var uid = url.replace(/(^.*\/)?(.{8}).*/,"$2");
+	if(uid.indexOf('00') == 0){
+		uid = string62to10(uid);
+	}else{
+		uid = parseInt(uid,16);
+	};
+	return uid;
+}
+
 })();

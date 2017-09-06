@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.2.0
+// @version        1.3.2.1
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -50,7 +50,7 @@ var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++
 
 //62进制转10进制
 function string62to10(number_code) {var chars = '0123456789abcdefghigklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ',radix = chars.length,number_code = String(number_code),len = number_code.length,i = 0,origin_number = 0;while (i < len) {origin_number += Math.pow(radix, i++) * chars.indexOf(number_code.charAt(len - i) || 0);}return origin_number;};
-	
+    
 /* -全局- */
 
 //判断浏览器以确定读取和储存方法
@@ -107,7 +107,7 @@ addStyleCompatible('\
     position: fixed;\
     top: 10%;\
     width: 100%;\
-    z-index: 999999\
+    z-index: 10002\
 }\
 #wlp_cdn>div {\
     width: 600px;\
@@ -144,7 +144,7 @@ addStyleCompatible('\
 }\
 #wlp_img_drag {\
     position: absolute;\
-	transition: all 0.15s ease;\
+    transition: all 0.15s ease;\
     z-index: 100;\
 }\
 #wlp_img {\
@@ -216,7 +216,7 @@ addStyleCompatible('\
     border-radius:10px;\
     background:rgba(80,80,80,0.5);\
     padding:5px;\
-    z-index:9999;\
+    z-index:10001;\
     min-width:5em;\
     text-align:center;\
 }\
@@ -267,7 +267,7 @@ addStyleCompatible('\
 #wlp_cp {\
     position:fixed;\
     bottom:0;\
-	width: 450px; z-index: 1; left: calc(50% - 255px);\
+    width: 450px; z-index: 1; left: calc(50% - 255px);\
     display:none;\
 }\
 #wlp_cp_wrap {\
@@ -280,7 +280,7 @@ addStyleCompatible('\
     border-bottom-left-radius:0;\
     border-bottom-right-radius:0;\
     border-bottom:none;\
-    z-index:9999;\
+    z-index:10001;\
 }\
 #wlp_cp_urllist {\
     margin:10px 0 0 0;\
@@ -1104,8 +1104,8 @@ var CDN = {
                     confirm('重新开启浮动栏需要刷新页面。\n\n点击“确定”立即刷新页面；\n点击“取消”那就待会儿再说~') === true ? window.location.reload() : true;
                 }
             }
-			//反查微博
-			$id('wlp_visit').onclick = function(){this.href = originUid($id('wlp_inputImgName').value);}
+            //反查微博
+            $id('wlp_visit').onclick = function(){this.href = 'http://weibo.com/' + originUid($id('wlp_inputImgName').value);}
             //退出
             $id('wlp_cdn_exit').onclick = function(){$id('wlp_cdn').style.display = 'none';}
         }else{
@@ -1191,13 +1191,13 @@ if(_on){
 }
 
 function originUid(url){
-	var uid = url.replace(/(^.*\/)?(.{8}).*/,"$2");
-	if(uid.indexOf('00') == 0){
-		uid = string62to10(uid);
-	}else{
-		uid = parseInt(uid,16);
-	};
-	return uid;
+    var uid = url.replace(/(^.*\/)?(.{8}).*/,"$2");
+    if(uid.indexOf('00') == 0){
+        uid = string62to10(uid);
+    }else{
+        uid = parseInt(uid,16);
+    };
+    return uid;
 }
 
 })();

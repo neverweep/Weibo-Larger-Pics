@@ -7,23 +7,15 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.2.1
+// @version        1.3.2.2
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
 // @grant          GM_setValue
 // @grant          GM_getValue
 // @grant          GM_addStyle
-// @include        http://t.sina.com.cn/*
-// @include        http://weibo.com/*
-// @include        http://www.weibo.com/*
-// @include        http://s.weibo.com/*
-// @include        http://s.weibo.com/pic/*
-// @include        http://photo.weibo.com/*
-// @include        http://d.weibo.com/*
-// @exclude        http://s.weibo.com/user/*
-// @exclude        http://weibo.com/app/*
-// @exclude        http://weibo.com/app
+// @match        http://*.weibo.com/*
+// @match        https://*.weibo.com/*
 // @updateURL      https://greasyfork.org/scripts/5038.js
 // @downloadURL    https://greasyfork.org/scripts/5038.js
 // ==/UserScript==
@@ -1139,7 +1131,7 @@ var CDN = {
                 $id('wlp_cdn_14').innerHTML = Math.round((result[1] + result[5] + result[9]) / 3);
                 $id('wlp_cdn_15').innerHTML = Math.round((result[2] + result[6] + result[10]) / 3);
                 $id('wlp_cdn_16').innerHTML = Math.round((result[3] + result[7] + result[11]) / 3);
-                document.body.removeChild(cdnimg); //删除测试节点
+                //document.body.removeChild(cdnimg); //删除测试节点
                 return true;
             }
             cdnimg.src = 'http://ww' + n + s + start;

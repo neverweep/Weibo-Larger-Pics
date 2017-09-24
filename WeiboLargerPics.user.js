@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.2.3
+// @version        1.3.2.4
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -473,8 +473,8 @@ var entrySmall = {
 
     main : function(that){
         wlp_floatbar.stick(that);
-        format = that.src.replace(reg7, '$1');//图片格式
-        cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');//图片 CDN 地址
+        format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
+        cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         if(that.parentNode.parentNode.getAttribute('action-data')== null){
             para = that.parentNode.getAttribute('action-data');
             pid = para.replace(/p(ic_)?id=(.*?)&.*/g, '$2');
@@ -491,8 +491,8 @@ var entrySmall = {
 
     search : function(that){
         wlp_floatbar.stick(that);
-        format = that.src.replace(reg7, '$1');
-        cdn = gallery._cdn ||that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
+        format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
+        cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.src.replace(reg13, '$1');
         if(that.getAttribute('action-type').indexOf('feed_list_media_img') >= 0){
             para = that.getAttribute('action-data').replace(reg11, '').split('&');
@@ -508,8 +508,8 @@ var entrySmall = {
 
     photo : function(that){
         wlp_floatbar.stick(that);
-        format = that.src.replace(reg7, '$1');
-        cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
+        format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
+        cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.src.replace(reg13, '$1');
         mid = that.parentNode.href.replace(reg18, '$1').replace(reg19, '');
         uid = that.parentNode.href.replace(reg3, '$1');
@@ -518,8 +518,8 @@ var entrySmall = {
 
     photoFluid : function(that){
         wlp_floatbar.stick(that);
-        format = that.src.replace(reg7, '$1');
-        cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
+        format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
+        cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
         uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
         wlp_floatbar.property(uid, mid, pid, format, cdn);
@@ -528,8 +528,8 @@ var entrySmall = {
     photoFluidNew : function(that){
         if(that.parentNode.href.indexOf("video.weibo.com") < 0){
             wlp_floatbar.stick(that);
-            format = that.src.replace(reg7, '$1');
-            cdn = gallery._cdn || that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg6, '$1');
+            format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
+            cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
             pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
             if(that.parentNode.parentNode.parentNode.children.length < 2){
                 mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
@@ -542,7 +542,7 @@ var entrySmall = {
     searchPic : function(that){
         wlp_floatbar.stick(that);
         format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
-        cdn = gallery._cdn || that.src.replace(reg6, '$1');
+        cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.src.replace(reg13, '$1');
         mid = that.getAttribute('mid');
         uid = that.parentNode.parentNode.parentNode.children[1].children[0].children[0].children[0].src.replace(reg17, '$1');

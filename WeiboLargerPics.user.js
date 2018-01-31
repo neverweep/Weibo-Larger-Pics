@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.2.4
+// @version        1.3.2.5
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -371,9 +371,9 @@ wlp_floatbar = {
 
     //工具条设置属性
     property : function(uid, mid, pid, format, cdn){
-        $id('wlp_floatbar_1').href = 'http://photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
-        $id('wlp_floatbar_3').href = 'http://ww' + (cdn != "t" ? cdn : "1") + '.sinaimg.cn/large/' + pid + format;
-        $id('wlp_floatbar_4').href = 'http://weibo.com/' + originUid($id('wlp_floatbar_3').href);
+        $id('wlp_floatbar_1').href = document.location.protocol + '//photo.weibo.com/' + uid + '/wbphotos/large/mid/' + mid + '/pid/' + pid;
+        $id('wlp_floatbar_3').href = document.location.protocol + '//ww' + (cdn != "t" ? cdn : "1") + '.sinaimg.cn/large/' + pid + format;
+        $id('wlp_floatbar_4').href = document.location.protocol + '//weibo.com/' + originUid($id('wlp_floatbar_3').href);
         //开始监听键盘事件
         document.onkeydown = function(e){
             e = e || window.event;
@@ -1036,7 +1036,7 @@ var CDN = {
                 save('view', __view);
             }
             //反查微博
-            $id('wlp_visit').onclick = function(){this.href = 'http://weibo.com/' + originUid($id('wlp_inputImgName').value);}
+            $id('wlp_visit').onclick = function(){this.href = document.location.protocol + '//weibo.com/' + originUid($id('wlp_inputImgName').value);}
             //退出
             $id('wlp_cdn_exit').onclick = function(){$id('wlp_cdn').style.display = 'none';}
         }else{
@@ -1073,18 +1073,18 @@ var CDN = {
                 //document.body.removeChild(cdnimg); //删除测试节点
                 return true;
             }
-            cdnimg.src = 'http://ww' + n + s + start;
+            cdnimg.src = document.location.protocol + '//ww' + n + s + start;
             //图片加载超时处理
             cdnt = window.setTimeout(function(){
                 result[j] = 5000;
                 n = j++ % 4 + 1;
                 $id('wlp_cdn_' + j).innerHTML = '超时';
-                cdnimg.src = 'http://ww' + n + s + start;
+                cdnimg.src = document.location.protocol + '//ww' + n + s + start;
                 start = new Date().getTime();
                 clearTimeout(cdnt);
             }, 5000);
         }
-        cdnimg.src = 'http://ww1' + s + start;
+        cdnimg.src = document.location.protocol + '//ww1' + s + start;
     },
 }
 

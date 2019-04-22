@@ -7,7 +7,7 @@
 // @description:en    View large pictures on weibo.com easily and quickly.
 // @description:zh    新浪微博看图增强脚本，查看原始大图更快更方便。
 // @license        GNU Lesser General Public License (LGPL)
-// @version        1.3.2.5
+// @version        1.3.2.6
 // @author         xiaoxia
 // @supportURL     https://github.com/neverweep/Weibo-Larger-Pics/issues
 // @copyright      xiaoxia, GNU Lesser General Public License (LGPL)
@@ -16,8 +16,6 @@
 // @grant          GM_addStyle
 // @match        http://*.weibo.com/*
 // @match        https://*.weibo.com/*
-// @updateURL      https://greasyfork.org/scripts/5038.js
-// @downloadURL    https://greasyfork.org/scripts/5038.js
 // ==/UserScript==
 
 (function(){
@@ -40,7 +38,12 @@ function addStyleCompatible(a){var b,d,c;'undefined'!=typeof GM_addStyle?'undefi
 var imgReady=function(){var e=[],t=null,n=function(){var t=0;for(;t<e.length;t++)e[t].end?e.splice(t--,1):e[t]();!e.length&&r()},r=function(){clearInterval(t),t=null};return function(r,i,s,o){var u,a,f,l,c,h=new Image;h.src=r;if(h.complete){i.call(h),s&&s.call(h);return}a=h.width,f=h.height,h.onerror=function(){o&&o.call(h),u.end=!0,h=h.onload=h.onerror=null},u=function(){l=h.width,c=h.height;if(l!==a||c!==f||l*c>1024)i.call(h),u.end=!0},u(),h.onload=function(){!u.end&&u(),s&&s.call(h),h=h.onload=h.onerror=null},u.end||(e.push(u),t===null&&(t=setInterval(n,40)))}}();
 
 //62进制转10进制
-function string62to10(number_code) {var chars = '0123456789abcdefghigklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ',radix = chars.length,number_code = String(number_code),len = number_code.length,i = 0,origin_number = 0;while (i < len) {origin_number += Math.pow(radix, i++) * chars.indexOf(number_code.charAt(len - i) || 0);}return origin_number;};
+const base62 = {
+    charset: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      .split(''),
+    decode: chars => chars.split('').reverse().reduce((prev, curr, i) =>
+      prev + (base62.charset.indexOf(curr) * (62 ** i)), 0)
+  };
     
 /* -全局- */
 
@@ -419,7 +422,7 @@ var bindSmall = {
     },
 
     search : function(){
-        wlp_bind.Search = addNodeInsertedListener('img.bigcursor[src*="sinaimg"]:hover', function(e){
+        wlp_bind.Search = addNodeInsertedListener('img[src*="sinaimg"]:hover', function(e){
             that = e.target || event.target;
             wlp_floatbar.close();
             entrySmall.search(that);
@@ -475,17 +478,16 @@ var entrySmall = {
         wlp_floatbar.stick(that);
         format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
         cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
-        if(that.parentNode.parentNode.getAttribute('action-data')== null){
+        if(that.parentNode.getAttribute('action-type').indexOf('feed_list_media_img') >= 0){
+            pid = that.src.replace(/http.*\/(.*?)\..*/,'$1');
             para = that.parentNode.getAttribute('action-data');
-            pid = para.replace(/p(ic_)?id=(.*?)&.*/g, '$2');
             mid = para.replace(reg5, '$1');
-            uid = para.replace(reg4, '$1');
         }else{
             para = that.parentNode.parentNode.getAttribute('action-data');
             pid = that.src.replace(reg13, '$1');
             mid = para.replace(reg5, '$1');
-            uid = para.replace(reg4, '$1');
         }
+        uid = originUid(pid);
         wlp_floatbar.property(uid, mid, pid, format, cdn);
     },
 
@@ -494,15 +496,13 @@ var entrySmall = {
         format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
         cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.src.replace(reg13, '$1');
-        if(that.getAttribute('action-type').indexOf('feed_list_media_img') >= 0){
-            para = that.getAttribute('action-data').replace(reg11, '').split('&');
+        if(that.getAttribute('action-type').indexOf('fl_pics') >= 0){
+            para = that.parentNode.parentNode.parentNode.getAttribute('action-data').replace(reg11, '').split('&');
             mid = para[1];
-            uid = para[0];
         }else{
-            that = that.parentNode.parentNode.parentNode;
-            mid = that.getAttribute('action-data').replace(reg5, '$1');
-            uid = that.getAttribute('action-data').replace(reg4, '$1');
+            mid = that.getAttribute('mid');
         }
+        uid = originUid(pid);
         wlp_floatbar.property(uid, mid, pid, format, cdn);
     },
 
@@ -512,7 +512,7 @@ var entrySmall = {
         cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.src.replace(reg13, '$1');
         mid = that.parentNode.href.replace(reg18, '$1').replace(reg19, '');
-        uid = that.parentNode.href.replace(reg3, '$1');
+        uid = originUid(pid);
         wlp_floatbar.property(uid, mid, pid, format, cdn);
     },
 
@@ -521,7 +521,7 @@ var entrySmall = {
         format = that.src.replace(/wx(\d)\./, 'ww$1.').replace(reg7, '$1');
         cdn = gallery._cdn || that.src.replace(/\/\/wt\./, '//ww1.').replace(/\/\/w[xt](\d)\./, '//ww$1.').replace(reg6, '$1');
         pid = that.parentNode.getAttribute('action-data').replace(reg9, '$1');
-        uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
+        uid = originUid(pid);
         wlp_floatbar.property(uid, mid, pid, format, cdn);
     },
 
@@ -534,7 +534,7 @@ var entrySmall = {
             if(that.parentNode.parentNode.parentNode.children.length < 2){
                 mid = that.parentNode.getAttribute('action-data').replace(reg5, '$1');
             }
-            uid = that.parentNode.getAttribute('action-data').replace(reg4, '$1');
+            uid = originUid(pid);
             wlp_floatbar.property(uid, mid, pid, format, cdn);
         }
     },
@@ -581,7 +581,7 @@ $id('wlp_cp_cdn').onclick = function(){CDN.cdnUI();}
 
 
 function initGallery(){
-    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"], img.photo_pict[src*="sinaimg"]');
+    imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"], img.photo_pict[src*="sinaimg"], img[src*="sinaimg"]');
     src = $id('wlp_floatbar_3').href.replace(reg18, '$1').replace(reg19, '');;
     for(var i in imgs){
         //获取当前图片的次序
@@ -1125,7 +1125,7 @@ gallery.init();
 function originUid(url){
     var uid = url.replace(/(^.*\/)?(.{8}).*/,"$2");
     if(uid.indexOf('00') == 0){
-        uid = string62to10(uid);
+        uid = base62.decode(uid);
     }else{
         uid = parseInt(uid,16);
     };

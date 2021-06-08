@@ -14,6 +14,7 @@
 // @grant          GM_setValue
 // @grant          GM_getValue
 // @grant          GM_addStyle
+// @grant          GM_setClipboard
 // @match        http://*.weibo.com/*
 // @match        https://*.weibo.com/*
 // ==/UserScript==
@@ -568,7 +569,7 @@ $id('wlp_floatbar_5').onclick = function(){wlp_floatbar.close();}
 //创建收集面板
 var cpDiv = document.createElement('div');
 cpDiv.id = 'wlp_cp';
-cpDiv.innerHTML = '<div id="wlp_cp_wrap"><textarea id="wlp_cp_urllist" readonly></textarea><div id="wlp_cp_btn"><div style="float:left"><a href="javascript:;" id="wlp_cp_clear" style="margin-right:10px">清空</a><a href="javascript:;" id="wlp_cp_close">关闭</a></div><div style="float:right"><a href="javascript:;" id="wlp_cp_cdn">设置</a></div><div style="clear:both"></div></div><div>点击地址收集文本框，按下 Ctrl+A 再按 Ctrl+C 即可将地址复制到剪贴板。</div><div>刷新页面或进入新页面将会清空收集！</div></div>';
+cpDiv.innerHTML = '<div id="wlp_cp_wrap"><textarea id="wlp_cp_urllist" readonly></textarea><div id="wlp_cp_btn"><div style="float:left"><a href="javascript:;" id="wlp_cp_clear" style="margin-right:10px">清空</a><a href="javascript:;" id="wlp_copy_close" style="margin-right:10px">复制</a><a href="javascript:;" id="wlp_cp_close">关闭</a></div><div style="float:right"><a href="javascript:;" id="wlp_cp_cdn">设置</a></div><div style="clear:both"></div></div><div>点击复制按钮将地址复制到剪贴板，然后会关闭并清空收集。</div><div>刷新页面或进入新页面将会清空收集！</div></div>';
 document.body.appendChild(cpDiv);
 
 $id('wlp_cp_close').onclick = function(){$id('wlp_cp').style.display = "none";}
@@ -578,7 +579,12 @@ $id('wlp_cp_clear').onclick = function(){
     cp = [];
 }
 $id('wlp_cp_cdn').onclick = function(){CDN.cdnUI();}
-
+$id('wlp_copy_close').onclick = function(){
+    GM_setClipboard(cp.join("\n"));
+    $id('wlp_cp').style.display = "none";
+    $id('wlp_cp_urllist').innerText = "";
+    cp = [];
+}
 
 function initGallery(){
     imgs = document.querySelectorAll('img.bigcursor[src*="sinaimg"], img.imgicon[src*="sinaimg"], .photoList img[src*="sinaimg"], img.photo_pic[src*="sinaimg"], .list_picbox .img img[src*="sinaimg"], li.bigcursor img[src*="sinaimg"], img.photo_pict[src*="sinaimg"], img[src*="sinaimg"]');
